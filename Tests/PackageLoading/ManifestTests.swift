@@ -106,9 +106,27 @@ class ManifestTests: XCTestCase {
             } catch {
                 XCTFail("Failed with error: \(error)")
             }
+            XCTFail("Should have failed")
         }
     }
 
+    func testProductWithMissingModules() {
+        fixture(name: "Miscellaneous/ProductWithMissingModules") { prefix in
+            do {
+                let manifest = try Manifest(path: Path.join(prefix, "Package.swift"), baseURL: prefix, swiftc: swiftc, libdir: libdir)
+                let package = Package(manifest: manifest, url: prefix)
+
+                _ = try package.products(try package.modules())
+            } catch Product.Error.moduleNotFound(let product, let module) {
+                XCTAssertEqual(product, "Bar")
+                XCTAssertEqual(module, "Baz")
+            } catch {
+                XCTFail("Failed with error: \(error)")
+            }
+            XCTFail("Should have failed")
+        }
+    }
+    
     static var allTests = [
         ("testManifestLoading", testManifestLoading),
         ("testNoManifest", testNoManifest),
