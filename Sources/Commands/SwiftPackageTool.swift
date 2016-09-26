@@ -21,7 +21,12 @@ import protocol Build.Toolchain
 
 import func POSIX.chdir
 
-public enum PackageMode: Argument, Equatable, CustomStringConvertible {
+public protocol ArgumentCollection {
+    static var arguments: [String] { get }
+}
+
+public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentCollection {
+    case completions
     case dumpPackage
     case fetch
     case generateXcodeproj
@@ -34,6 +39,8 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
     public init?(argument: String, pop: @escaping () -> String?) throws {
         switch argument {
+        case "completions":
+            self = .completions
         case "dump-package":
             self = .dumpPackage
         case "fetch":
@@ -59,6 +66,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
     public var description: String {
         switch self {
+        case .completions: return "completions"
         case .dumpPackage: return "dump-package"
         case .fetch: return "fetch"
         case .generateXcodeproj: return "generate-xcodeproj"
@@ -69,6 +77,12 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
         case .usage: return "--help"
         case .version: return "--version"
         }
+    }
+
+    public static var arguments: [String] {
+        return ["dump-package", "fetch", "generate-xcodeproj", "init", 
+                "resolve", "show-dependencies", "update", "--help", "-h",
+                "--version"]
     }
 }
 
@@ -226,6 +240,9 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
             let manifest = try loadRootManifest(options)
             // FIXME: It would be nice if this has a pretty print option.
             print(manifest.jsonString())
+        
+        case .completions:
+            print("package\nbuild")
         }
     }
 
