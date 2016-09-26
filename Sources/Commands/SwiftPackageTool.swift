@@ -81,8 +81,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentC
 
     public static var arguments: [String] {
         return ["dump-package", "fetch", "generate-xcodeproj", "init", 
-                "resolve", "show-dependencies", "update", "--help", "-h",
-                "--version"]
+                "show-dependencies", "update", "--help", "-h", "--version"]
     }
 }
 
