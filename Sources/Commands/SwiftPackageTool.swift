@@ -20,13 +20,14 @@ import enum Build.Configuration
 import protocol Build.Toolchain
 
 import func POSIX.chdir
+import func POSIX.exit
 
 public protocol ArgumentCollection {
     static var arguments: [String] { get }
 }
 
 public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentCollection {
-    case completions
+    case completions(String, String, String)
     case dumpPackage
     case fetch
     case generateXcodeproj
@@ -38,9 +39,14 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentC
     case version
 
     public init?(argument: String, pop: @escaping () -> String?) throws {
+        func forcePop() throws -> String {
+            guard let value = pop() else { throw OptionParserError.expectedAssociatedValue(argument) }
+            return value
+        }
+
         switch argument {
         case "completions":
-            self = .completions
+            self = try .completions(forcePop(), forcePop(), forcePop())
         case "dump-package":
             self = .dumpPackage
         case "fetch":
@@ -240,8 +246,11 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
             // FIXME: It would be nice if this has a pretty print option.
             print(manifest.jsonString())
         
-        case .completions:
-            print("package\nbuild")
+        case .completions(let (command, currentWord, previousWord)):
+            guard let possibilities = completions(command: command, currentWord: currentWord, previousWord: previousWord) else {
+                exit(1)
+            }
+            print(possibilities.joined(separator: "\n"))
         }
     }
 
