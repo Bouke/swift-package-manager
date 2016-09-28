@@ -22,12 +22,43 @@ import protocol Build.Toolchain
 import func POSIX.chdir
 import func POSIX.exit
 
-public protocol ArgumentCollection {
-    static var arguments: [String] { get }
+public enum Shell {
+    case bash
+    case zsh
 }
 
-public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentCollection {
-    case completions(String, String, String)
+public protocol Option {
+    func shellDescription(_ shell: Shell) -> String
+}
+
+public struct Flag_: Option {
+    let shortFlag: String?
+    let longFlag: String?
+    let description: String
+    let completions: [String]
+
+    public func shellDescription(_ shell: Shell) -> String {
+        switch shell {
+            case .bash: return "\(shortFlag ?? "") \(longFlag ?? "")"
+            case .zsh: return "'(\(shortFlag ?? "") \(longFlag ?? ""))'{\(shortFlag ?? ""),\(longFlag ?? "")}'[\(description)]'" //: :(\(completions.joined(separator: " ")))"
+        }
+    }
+}
+
+public struct Command: Option {
+    let name: String
+    let description: String
+
+    public func shellDescription(_ shell: Shell) -> String {
+        switch shell {
+            case .bash: return name
+            case .zsh: return "\(name):\(description)"
+        }
+    }
+}
+
+public enum PackageMode: Argument, Equatable, CustomStringConvertible {
+    case options(String)
     case dumpPackage
     case fetch
     case generateXcodeproj
@@ -39,14 +70,15 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentC
     case version
 
     public init?(argument: String, pop: @escaping () -> String?) throws {
+
         func forcePop() throws -> String {
             guard let value = pop() else { throw OptionParserError.expectedAssociatedValue(argument) }
             return value
         }
 
         switch argument {
-        case "completions":
-            self = try .completions(forcePop(), forcePop(), forcePop())
+        case "options":
+            self = .options(try forcePop())
         case "dump-package":
             self = .dumpPackage
         case "fetch":
@@ -72,7 +104,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentC
 
     public var description: String {
         switch self {
-        case .completions: return "completions"
+        case .options(_): return "options"
         case .dumpPackage: return "dump-package"
         case .fetch: return "fetch"
         case .generateXcodeproj: return "generate-xcodeproj"
@@ -85,9 +117,15 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible, ArgumentC
         }
     }
 
-    public static var arguments: [String] {
-        return ["dump-package", "fetch", "generate-xcodeproj", "init", 
-                "show-dependencies", "update", "--help", "-h", "--version"]
+    public static var options_: [Option] {
+        return [
+            Command(name: "init", description: "Initialize a new package"),
+            Command(name: "dump-package", description: "Print parsed Package.swift as JSON"),
+            Command(name: "fetch", description: "Fetch package dependencies"),
+            Command(name: "update", description: "Update package dependencies"),
+            Flag_(shortFlag: "-h", longFlag: "--help", description: "This help page", completions: []),
+            Flag_(shortFlag: "-v", longFlag: "--version", description: "Print the Swift Package Manager version", completions: []),
+        ]
     }
 }
 
@@ -166,6 +204,18 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
 
     override func runImpl() throws {
         switch mode {
+        case .options(let type):
+            switch type {
+            case "commands":
+                for option in PackageMode.options_.flatMap({ $0 as? Command }) {
+                    print(option.shellDescription(.zsh))
+                }
+            case "flags":
+                for option in PackageMode.options_.flatMap({ $0 as? Flag_ }) {
+                    print(option.shellDescription(.zsh))
+                }
+            default: break
+            }
         case .usage:
             SwiftPackageTool.usage()
 
@@ -245,12 +295,6 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
             let manifest = try loadRootManifest(options)
             // FIXME: It would be nice if this has a pretty print option.
             print(manifest.jsonString())
-        
-        case .completions(let (command, currentWord, previousWord)):
-            guard let possibilities = completions(command: command, currentWord: currentWord, previousWord: previousWord) else {
-                exit(1)
-            }
-            print(possibilities.joined(separator: "\n"))
         }
     }
 

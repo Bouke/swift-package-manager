@@ -7,7 +7,7 @@ _swift() {
     shared_options=(
         '(-C --chdir)'{-C,--chdir}"[Change working directory before any other operation]: :_files"
         "--color[Specify color mode (auto|always|never)]: :{_values "mode" auto always never}"
-        '(-v --verbose)'{-v,--verbose}"[Increase verbosity of informational output]"
+        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]'
         "-Xcc[Pass flag through to all C compiler invocations]: : "
         "-Xlinker[Pass flag through to all linker invocations]: : "
         "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
@@ -59,17 +59,33 @@ _swift_build() {
 
 _swift_package() {
     local -a commands
-    commands=(
-        'init:Initialize a new package'
-        'fetch:Fetch package dependencies'
-        'update:Update package dependencies'
-        'generate-xcodeproj:Generates an Xcode project'
-        'show-dependencies:Print the resolved dependency graph'
-        'dump-package:Print parsed Package.swift as JSON'
-        '--version:Print the Swift Package Manager version'
+    declare -a flags
+
+    IFS='
+' commands=($(/Users/bouke/Developer/swift-package-manager/.build/debug/swift-package options commands))
+    # IFS='
+# ' flags=($(/Users/bouke/Developer/swift-package-manager/.build/debug/swift-package options flags))
+
+    flags = (
+        "-Xcc[Pass flag through to all C compiler invocations]: : "
+        "-Xlinker[Pass flag through to all linker invocations]: : "
     )
+
+    # commands=(
+    #     $(/Users/bouke/Developer/swift-package-manager/.build/debug/swift-package options "package")
+
+        # 'init:Initialize a new package'
+        # 'fetch:Fetch package dependencies'
+        # 'update:Update package dependencies'
+        # 'generate-xcodeproj:Generates an Xcode project'
+        # 'show-dependencies:Print the resolved dependency graph'
+        # 'dump-package:Print parsed Package.swift as JSON'
+    # )
+
+
     _arguments \
         '(-): :{_describe "commands" commands}' \
+        $flags \
         '(-)*:: :->arg'
 
     case $state in
