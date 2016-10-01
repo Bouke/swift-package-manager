@@ -133,3 +133,68 @@ private func split(_ arg: String) -> (String, String?) {
         return (arg, nil)
     }
 }
+
+
+public enum Shell {
+    case bash
+    case zsh
+}
+
+
+public protocol Option {
+    func shellDescription(_ shell: Shell) -> String
+}
+
+
+public struct OptionFlag: Option {
+    public let shortFlag: String?
+    public let longFlag: String?
+    public let description: String
+    public let completions: [String]
+
+    public init(shortFlag: String? = nil, longFlag: String?, description: String, completions: [String]) {
+        self.shortFlag = shortFlag
+        self.longFlag = longFlag
+        self.description = description
+        self.completions = completions
+    }
+
+    public func shellDescription(_ shell: Shell) -> String {
+        switch shell {
+        case .bash: return "\(shortFlag ?? "") \(longFlag ?? "")"
+        case .zsh:
+            switch (shortFlag, longFlag) {
+            case (.some(let shortFlag), .none):
+                return "'(-\(shortFlag))-\(shortFlag)[\(description)]'" //: :(\(completions.joined(separator: " ")))"
+
+            case (.none, .some(let longFlag)):
+                return "'(--\(longFlag))--\(longFlag)[\(description)]'" //: :(\(completions.joined(separator: " ")))"
+
+            case (let (shortFlag?, longFlag?)):
+                return "'(-\(shortFlag) --\(longFlag))'{-\(shortFlag),--\(longFlag)}'[\(description)]'" //: :(\(completions.joined(separator: " ")))"
+
+            default: fatalError()
+            }
+        }
+    }
+}
+
+
+public struct OptionMode: Option {
+    public let name: String
+    public let description: String
+    public let options: [Option]
+
+    public init(name: String, description: String, options: [Option]) {
+        self.name = name
+        self.description = description
+        self.options = options
+    }
+
+    public func shellDescription(_ shell: Shell) -> String {
+        switch shell {
+        case .bash: return name
+        case .zsh: return "'\(name):\(description)'"
+        }
+    }
+}

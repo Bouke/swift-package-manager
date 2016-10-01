@@ -105,6 +105,10 @@ let package = Package(
             /** Shim tool to find test names on OS X */
             name: "swiftpm-xctest-helper",
             dependencies: []),
+        Target(
+            /** Shim tool to find test names on OS X */
+            name: "playground",
+            dependencies: ["Commands"]),
 
         // MARK: Additional Test Dependencies
 

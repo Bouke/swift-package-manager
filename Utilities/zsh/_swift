@@ -7,7 +7,7 @@ _swift() {
     shared_options=(
         '(-C --chdir)'{-C,--chdir}"[Change working directory before any other operation]: :_files"
         "--color[Specify color mode (auto|always|never)]: :{_values "mode" auto always never}"
-        '(-v --verbose)'{-v,--verbose}"[Increase verbosity of informational output]"
+        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]'
         "-Xcc[Pass flag through to all C compiler invocations]: : "
         "-Xlinker[Pass flag through to all linker invocations]: : "
         "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
@@ -64,12 +64,13 @@ _swift_package() {
         'fetch:Fetch package dependencies'
         'update:Update package dependencies'
         'generate-xcodeproj:Generates an Xcode project'
-        'show-dependencies:Print the resolved dependency graph'
+        'show-dependencies:Print the resolved dependency grap'
         'dump-package:Print parsed Package.swift as JSON'
-        '--version:Print the Swift Package Manager version'
     )
     _arguments \
         '(-): :{_describe "commands" commands}' \
+        '(-h --help)'{-h,--help}'[This help page]' \
+        '(--version)--version[Print the Swift Package Manager version]' \
         '(-)*:: :->arg'
 
     case $state in
@@ -83,26 +84,73 @@ _swift_package() {
             case ${words[1]} in
                 (init)
                     _arguments \
-                        '--type[Type of package to initialize]: :{_values "package types" empty library executable system-module}' \
-                        $package_options
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
+                        '(--type)--type[Package type]' \
+                    ;;
+                (fetch)
+                    _arguments \
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
+                    ;;
+                (update)
+                    _arguments \
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
                     ;;
                 (generate-xcodeproj)
                     _arguments \
-                        '--output:[Xcode project filename]:_files' \
-                        $package_options
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
+                        '(--output)--output[Xcode project file]' \
                     ;;
                 (show-dependencies)
                     _arguments \
-                        '--format[Dependency graph output format]:FORMATS:{_values "formats" text dot json}' \
-                        $package_options
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
+                        '(--format)--format[Dependency output format]' \
                     ;;
                 (dump-package)
                     _arguments \
-                        '--input:[Package filename to parse]:_files' \
-                        $package_options
-                    ;;
-                (*)
-                    _arguments $package_options
+                        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]' \
+                        '(--build-path)--build-path[Specify build/cache directory]' \
+                        '(--color)--color[Specify color mode]' \
+                        '(--enable-code-coverage)--enable-code-coverage[Enable code coverage in generated Xcode projects]' \
+                        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]' \
+                        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]' \
+                        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]' \
+                        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]' \
+                        '(--input)--input[Path of the Package.swift file]' \
                     ;;
             esac
             ;;

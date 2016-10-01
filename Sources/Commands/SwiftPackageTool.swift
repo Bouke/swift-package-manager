@@ -21,6 +21,8 @@ import enum Build.Configuration
 import protocol Build.Toolchain
 import func POSIX.exit
 import func POSIX.chdir
+import func POSIX.exit
+
 
 /// Errors encountered duing the package tool operations.
 enum PackageToolOperationError: Swift.Error {
@@ -32,6 +34,7 @@ enum PackageToolOperationError: Swift.Error {
 }
 
 public enum PackageMode: Argument, Equatable, CustomStringConvertible {
+    case options(String)
     case dumpPackage
     case edit
     case unedit
@@ -46,7 +49,15 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
     case version
 
     public init?(argument: String, pop: @escaping () -> String?) throws {
+
+        func forcePop() throws -> String {
+            guard let value = pop() else { throw OptionParserError.expectedAssociatedValue(argument) }
+            return value
+        }
+
         switch argument {
+        case "options":
+            self = .options(try forcePop())
         case "dump-package":
             self = .dumpPackage
         case "edit":
@@ -78,6 +89,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
     public var description: String {
         switch self {
+        case .options(_): return "options"
         case .dumpPackage: return "dump-package"
         case .edit: return "edit"
         case .unedit: return "unedit"
@@ -91,6 +103,39 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
         case .usage: return "--help"
         case .version: return "--version"
         }
+    }
+
+    public static var options_: [Option] {
+        let packageFlags: [Option] = [
+            OptionFlag(shortFlag: "C", longFlag: "chdir", description: "Change working directory before building", completions: []),
+            OptionFlag(longFlag: "build-path", description: "Specify build/cache directory", completions: []),
+            OptionFlag(longFlag: "color", description: "Specify color mode", completions: []),
+            OptionFlag(longFlag: "enable-code-coverage", description: "Enable code coverage in generated Xcode projects", completions: []),
+            OptionFlag(shortFlag: "v", longFlag: "verbose", description: "Increase verbosity of informational output", completions: []),
+            OptionFlag(longFlag: "Xcc", description: "Pass flag through to all C compiler invocations", completions: []),
+            OptionFlag(longFlag: "Xlinker", description: "Pass flag through to all linker invocations", completions: []),
+            OptionFlag(longFlag: "Xswiftc", description: "Pass flag through to all Swift compiler invocations", completions: []),
+        ]
+
+        return [
+            OptionMode(name: "init", description: "Initialize a new package", options: packageFlags + [
+                OptionFlag(longFlag: "type", description: "Package type", completions: ["executable"])
+            ]),
+            OptionMode(name: "fetch", description: "Fetch package dependencies", options: packageFlags),
+            OptionMode(name: "update", description: "Update package dependencies", options: packageFlags),
+            OptionMode(name: "generate-xcodeproj", description: "Generates an Xcode project", options: packageFlags + [
+                OptionFlag(longFlag: "output", description: "Xcode project file", completions: [])
+            ]),
+            OptionMode(name: "show-dependencies", description: "Print the resolved dependency grap", options: packageFlags + [
+                OptionFlag(longFlag: "format", description: "Dependency output format", completions: ["text", "dot", "json"])
+            ]),
+            OptionMode(name: "dump-package", description: "Print parsed Package.swift as JSON", options: packageFlags + [
+                OptionFlag(longFlag: "input", description: "Path of the Package.swift file", completions: [])
+            ]),
+
+            OptionFlag(shortFlag: "h", longFlag: "help", description: "This help page", completions: []),
+            OptionFlag(longFlag: "version", description: "Print the Swift Package Manager version", completions: []),
+        ]
     }
 }
 
@@ -185,6 +230,21 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
 
     override func runImpl() throws {
         switch mode {
+        case .options(let type):
+            switch type {
+            case "commands":
+                for option in PackageMode.options_.flatMap({ $0 as? OptionMode }) {
+                    print(option.shellDescription(.zsh))
+                }
+            case "flags":
+                for option in PackageMode.options_.flatMap({ $0 as? OptionFlag }) {
+                    print(option.shellDescription(.zsh))
+                }
+            case "zsh":
+                zsh_template(print: { print($0) })
+
+            default: break
+            }
         case .usage:
             SwiftPackageTool.usage()
 
