@@ -146,17 +146,25 @@ public protocol Option {
 }
 
 
+public enum OptionFlagCompletion {
+    case none
+    case values([String])
+    case filename
+    case other
+}
+
+
 public struct OptionFlag: Option {
     public let shortFlag: String?
     public let longFlag: String?
     public let description: String
-    public let completions: [String]
+    public let completion: OptionFlagCompletion
 
-    public init(shortFlag: String? = nil, longFlag: String?, description: String, completions: [String]) {
+    public init(shortFlag: String? = nil, longFlag: String?, description: String, completion: OptionFlagCompletion = .none) {
         self.shortFlag = shortFlag
         self.longFlag = longFlag
         self.description = description
-        self.completions = completions
+        self.completion = completion
     }
 
     public func shellDescription(_ shell: Shell) -> String {

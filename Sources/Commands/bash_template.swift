@@ -29,19 +29,6 @@ func bash_template(print: (String) -> ()) {
 
     print("    # shared options are available in all tools")
     print("    shared_options=\"-C --chdir --color -v --verbose -Xcc -Xlinker -Xswiftc\"")
-    print("    case $prev in")
-    print("        (-C|--chdir)")
-    print("            _filedir")
-    print("            return")
-    print("            ;;")
-    print("        (--color)")
-    print("            COMPREPLY=( $(compgen -W \"auto always never\" -- $cur) )")
-    print("            return")
-    print("            ;;")
-    print("        (-Xcc|-Xlinker|-Xswiftc)")
-    print("            return")
-    print("            ;;")
-    print("    esac")
 
     print("    # specify for each tool")
     print("    case ${COMP_WORDS[1]} in")
@@ -138,10 +125,20 @@ func mode(options: [Option], name: String, position: Int, print: (String) -> ())
     print("    case $prev in")
     for option in options.flatMap({ $0 as? OptionFlag }) {
         print("        (\(option.flags.joined(separator: "|")))")
-        //TODO: file completion
-        print("            COMPREPLY=( $(compgen -W \"\(option.completions.joined(separator: " "))\" -- $cur) )")
-        print("            return")
-        print("            ;;")
+        switch option.completion {
+        case .none:
+            // no return; no value to complete
+            break
+        case .values(let values):
+            print("            COMPREPLY=( $(compgen -W \"\(values.joined(separator: " "))\" -- $cur) )")
+            print("            return")
+        case .filename:
+            print("            _filedir")
+            print("            return")
+        case .other:
+            print("            return")
+        }
+        print("        ;;")
     }
     print("    esac")
     print("")
@@ -150,7 +147,7 @@ func mode(options: [Option], name: String, position: Int, print: (String) -> ())
         print("        (\(option.name))")
         print("            \(name)_\(option.name)")
         print("            return")
-        print("            ;;")
+        print("        ;;")
     }
     print("    esac")
     print("")

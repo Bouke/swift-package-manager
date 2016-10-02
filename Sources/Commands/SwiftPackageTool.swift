@@ -107,34 +107,34 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
     public static var options_: [Option] {
         let packageFlags: [Option] = [
-            OptionFlag(shortFlag: "C", longFlag: "chdir", description: "Change working directory before building", completions: []),
-            OptionFlag(longFlag: "build-path", description: "Specify build/cache directory", completions: []),
-            OptionFlag(longFlag: "color", description: "Specify color mode", completions: ["auto", "always", "never"]),
-            OptionFlag(longFlag: "enable-code-coverage", description: "Enable code coverage in generated Xcode projects", completions: []),
-            OptionFlag(shortFlag: "v", longFlag: "verbose", description: "Increase verbosity of informational output", completions: []),
-            OptionFlag(longFlag: "Xcc", description: "Pass flag through to all C compiler invocations", completions: []),
-            OptionFlag(longFlag: "Xlinker", description: "Pass flag through to all linker invocations", completions: []),
-            OptionFlag(longFlag: "Xswiftc", description: "Pass flag through to all Swift compiler invocations", completions: []),
+            OptionFlag(shortFlag: "C", longFlag: "chdir", description: "Change working directory before building", completion: .filename),
+            OptionFlag(longFlag: "build-path", description: "Specify build/cache directory", completion: .filename),
+            OptionFlag(longFlag: "color", description: "Specify color mode", completion: .values(["auto", "always", "never"])),
+            OptionFlag(longFlag: "enable-code-coverage", description: "Enable code coverage in generated Xcode projects"),
+            OptionFlag(shortFlag: "v", longFlag: "verbose", description: "Increase verbosity of informational output"),
+            OptionFlag(longFlag: "Xcc", description: "Pass flag through to all C compiler invocations", completion: .other),
+            OptionFlag(longFlag: "Xlinker", description: "Pass flag through to all linker invocations", completion: .other),
+            OptionFlag(longFlag: "Xswiftc", description: "Pass flag through to all Swift compiler invocations", completion: .other),
         ]
 
         return [
             OptionMode(name: "init", description: "Initialize a new package", options: packageFlags + [
-                OptionFlag(longFlag: "type", description: "Package type", completions: ["empty", "library", "executable", "system-module"])
+                OptionFlag(longFlag: "type", description: "Package type", completion: .values(["empty", "library", "executable", "system-module"]))
             ]),
             OptionMode(name: "fetch", description: "Fetch package dependencies", options: packageFlags),
             OptionMode(name: "update", description: "Update package dependencies", options: packageFlags),
             OptionMode(name: "generate-xcodeproj", description: "Generates an Xcode project", options: packageFlags + [
-                OptionFlag(longFlag: "output", description: "Xcode project file", completions: [])
+                OptionFlag(longFlag: "output", description: "Xcode project file", completion: .filename)
             ]),
             OptionMode(name: "show-dependencies", description: "Print the resolved dependency grap", options: packageFlags + [
-                OptionFlag(longFlag: "format", description: "Dependency output format", completions: ["text", "dot", "json"])
+                OptionFlag(longFlag: "format", description: "Dependency output format", completion: .values(["text", "dot", "json"]))
             ]),
             OptionMode(name: "dump-package", description: "Print parsed Package.swift as JSON", options: packageFlags + [
-                OptionFlag(longFlag: "input", description: "Path of the Package.swift file", completions: [])
+                OptionFlag(longFlag: "input", description: "Path of the Package.swift file", completion: .filename)
             ]),
 
-            OptionFlag(shortFlag: "h", longFlag: "help", description: "This help page", completions: []),
-            OptionFlag(longFlag: "version", description: "Print the Swift Package Manager version", completions: []),
+            OptionFlag(shortFlag: "h", longFlag: "help", description: "This help page"),
+            OptionFlag(longFlag: "version", description: "Print the Swift Package Manager version"),
         ]
     }
 }
