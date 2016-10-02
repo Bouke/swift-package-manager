@@ -109,7 +109,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
         let packageFlags: [Option] = [
             OptionFlag(shortFlag: "C", longFlag: "chdir", description: "Change working directory before building", completions: []),
             OptionFlag(longFlag: "build-path", description: "Specify build/cache directory", completions: []),
-            OptionFlag(longFlag: "color", description: "Specify color mode", completions: []),
+            OptionFlag(longFlag: "color", description: "Specify color mode", completions: ["auto", "always", "never"]),
             OptionFlag(longFlag: "enable-code-coverage", description: "Enable code coverage in generated Xcode projects", completions: []),
             OptionFlag(shortFlag: "v", longFlag: "verbose", description: "Increase verbosity of informational output", completions: []),
             OptionFlag(longFlag: "Xcc", description: "Pass flag through to all C compiler invocations", completions: []),
@@ -119,7 +119,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
         return [
             OptionMode(name: "init", description: "Initialize a new package", options: packageFlags + [
-                OptionFlag(longFlag: "type", description: "Package type", completions: ["executable"])
+                OptionFlag(longFlag: "type", description: "Package type", completions: ["empty", "library", "executable", "system-module"])
             ]),
             OptionMode(name: "fetch", description: "Fetch package dependencies", options: packageFlags),
             OptionMode(name: "update", description: "Update package dependencies", options: packageFlags),
@@ -240,6 +240,8 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
                 for option in PackageMode.options_.flatMap({ $0 as? OptionFlag }) {
                     print(option.shellDescription(.zsh))
                 }
+            case "bash":
+                bash_template(print: { print($0) })
             case "zsh":
                 zsh_template(print: { print($0) })
 

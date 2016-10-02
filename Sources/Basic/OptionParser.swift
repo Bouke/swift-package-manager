@@ -177,6 +177,18 @@ public struct OptionFlag: Option {
             }
         }
     }
+
+    public var flags: [String] {
+        switch (shortFlag, longFlag) {
+        case (.some(let shortFlag), .none):
+            return ["-\(shortFlag)"]
+        case (.none, .some(let longFlag)):
+            return ["--\(longFlag)"]
+        case (let (shortFlag?, longFlag?)):
+            return ["-\(shortFlag)", "--\(longFlag)"]
+        default: fatalError()
+        }
+    }
 }
 
 
