@@ -62,11 +62,13 @@ func zsh_template(print: (String) -> ()) {
     print("}")
     print("")
     print("_swift_build() {")
-    print("    _arguments \\")
-    print("        '(-c --configuration)'{-c,--configuration}'[Build with configuration]:MODES:(debug release)' \\")
-    print("        '--clean[Delete artifacts (build|dist) (default: build)]:MODES:(build dist)' \\")
-    print("        $shared_options \\")
-    print("        '--build-path[Specify build directory]: :_files'")
+    print("    local -a arguments")
+    print("    arguments=(")
+    for option in BuildToolMode.options.flatMap({ $0 as? OptionFlag }) {
+        print("        \(option.shellDescription(.zsh))")
+    }
+    print("    )")
+    print("    _arguments $arguments")
     print("}")
     print("")
     print("_swift_package() {")

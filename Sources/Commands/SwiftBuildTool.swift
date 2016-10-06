@@ -49,6 +49,23 @@ public enum BuildToolMode: Argument, Equatable, CustomStringConvertible {
             case .version: return "--version"
         }
     }
+
+    static public var options: [Option] {
+        return [
+            OptionFlag(shortFlag: "c", longFlag: "configuration", description: "Build with configuration (debug|release)", completion: .values(["debug", "release"])), // todo: missing --config
+            OptionFlag(longFlag: "clean", description: "Delete artifacts", completion: .values(["build", "dist"])),
+            OptionFlag(shortFlag: "h", longFlag: "help", description: "This help page"),
+            OptionFlag(longFlag: "version", description: "Print the Swift Package Manager version"),
+            OptionFlag(shortFlag: "C", longFlag: "chdir", description: "Change working directory before building", completion: .filename),
+            OptionFlag(longFlag: "build-path", description: "Specify build/cache directory", completion: .filename),
+            OptionFlag(longFlag: "color", description: "Specify color mode", completion: .values(["auto", "always", "never"])),
+            OptionFlag(shortFlag: "v", longFlag: "verbose", description: "Increase verbosity of informational output"),
+            OptionFlag(longFlag: "Xcc", description: "Pass flag through to all C compiler invocations", completion: .other),
+            OptionFlag(longFlag: "Xlinker", description: "Pass flag through to all linker invocations", completion: .other),
+            OptionFlag(longFlag: "Xswiftc", description: "Pass flag through to all Swift compiler invocations", completion: .other),
+
+        ]
+    }
 }
 
 private enum BuildToolFlag: Argument {

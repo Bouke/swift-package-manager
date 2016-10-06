@@ -50,11 +50,21 @@ _swift() {
 }
 
 _swift_build() {
-    _arguments \
-        '(-c --configuration)'{-c,--configuration}'[Build with configuration]:MODES:(debug release)' \
-        '--clean[Delete artifacts (build|dist) (default: build)]:MODES:(build dist)' \
-        $shared_options \
-        '--build-path[Specify build directory]: :_files'
+    local -a arguments
+    arguments=(
+        '(-c --configuration)'{-c,--configuration}'[Build with configuration (debug|release)]'
+        '(--clean)--clean[Delete artifacts]'
+        '(-h --help)'{-h,--help}'[This help page]'
+        '(--version)--version[Print the Swift Package Manager version]'
+        '(-C --chdir)'{-C,--chdir}'[Change working directory before building]'
+        '(--build-path)--build-path[Specify build/cache directory]'
+        '(--color)--color[Specify color mode]'
+        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]'
+        '(--Xcc)--Xcc[Pass flag through to all C compiler invocations]'
+        '(--Xlinker)--Xlinker[Pass flag through to all linker invocations]'
+        '(--Xswiftc)--Xswiftc[Pass flag through to all Swift compiler invocations]'
+    )
+    _arguments $arguments
 }
 
 _swift_package() {
