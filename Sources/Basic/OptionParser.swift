@@ -135,9 +135,9 @@ private func split(_ arg: String) -> (String, String?) {
 }
 
 
-public enum Shell {
-    case bash
-    case zsh
+public enum Shell: String {
+    case bash = "bash"
+    case zsh = "zsh"
 }
 
 

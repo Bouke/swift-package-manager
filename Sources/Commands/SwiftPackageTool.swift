@@ -34,7 +34,7 @@ enum PackageToolOperationError: Swift.Error {
 }
 
 public enum PackageMode: Argument, Equatable, CustomStringConvertible {
-    case options(String)
+    case generateCompletionScript(Shell)
     case dumpPackage
     case edit
     case unedit
@@ -56,8 +56,11 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
         }
 
         switch argument {
-        case "options":
-            self = .options(try forcePop())
+        case "generate-completion-script":
+            guard let shell = Shell(rawValue: try forcePop()) else {
+                throw PackageToolOperationError.insufficientOptions(usage: "invalid shell")
+            }
+            self = .generateCompletionScript(shell)
         case "dump-package":
             self = .dumpPackage
         case "edit":
@@ -89,7 +92,7 @@ public enum PackageMode: Argument, Equatable, CustomStringConvertible {
 
     public var description: String {
         switch self {
-        case .options(_): return "options"
+        case .generateCompletionScript: return "generate-completion-script"
         case .dumpPackage: return "dump-package"
         case .edit: return "edit"
         case .unedit: return "unedit"
@@ -230,22 +233,12 @@ public class SwiftPackageTool: SwiftTool<PackageMode, PackageToolOptions> {
 
     override func runImpl() throws {
         switch mode {
-        case .options(let type):
-            switch type {
-            case "commands":
-                for option in PackageMode.options_.flatMap({ $0 as? OptionMode }) {
-                    print(option.shellDescription(.zsh))
-                }
-            case "flags":
-                for option in PackageMode.options_.flatMap({ $0 as? OptionFlag }) {
-                    print(option.shellDescription(.zsh))
-                }
-            case "bash":
+        case .generateCompletionScript(let flavour):
+            switch flavour {
+            case .bash:
                 bash_template(print: { print($0) })
-            case "zsh":
+            case .zsh:
                 zsh_template(print: { print($0) })
-
-            default: break
             }
         case .usage:
             SwiftPackageTool.usage()
