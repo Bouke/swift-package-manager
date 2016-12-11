@@ -42,4 +42,25 @@ public class ToolOptions {
 }
 
 /// Parser conformance for ColorWrap.
-extension ColorWrap.Mode: StringEnumArgument {}
+extension ColorWrap.Mode: StringEnumArgument {
+    public static var completion: ShellCompletion {
+        return .values([
+            (Auto.description, ""),
+            (Always.description, ""),
+            (Never.description, "")
+        ])
+    }
+}
+
+/// Parser conformance for AbsolutePath.
+extension AbsolutePath: ArgumentKind {
+    public init?(arg: String) {
+        self.init(arg, relativeTo: currentWorkingDirectory)
+    }
+
+    public init(parser: inout ArgumentParserProtocol) throws {
+        try self.init(parser.associatedArgumentValue ?? parser.next(), relativeTo: currentWorkingDirectory)
+    }
+    
+    public static var completion: ShellCompletion = .filename
+}

@@ -232,6 +232,13 @@ public class SwiftPackageTool: SwiftTool<PackageToolOptions> {
             }
             let workspace = try getActiveWorkspace()
             try workspace.pinsStore.unpin(package: packageName)
+
+        case .generateShellScript:
+            switch options.shell {
+            case .bash: bash_template(print: { print($0) })
+//            case .zsh: zsh_template(print: print)
+            default: break
+            }
         }
     }
 
@@ -347,11 +354,11 @@ public class SwiftPackageTool: SwiftTool<PackageToolOptions> {
                 option: "--enable-code-coverage", kind: Bool.self,
                 usage: "Enable code coverage in the generated project"),
             generateXcodeParser.add(
-                option: "--output", kind: String.self,
+                option: "--output", kind: AbsolutePath.self,
                 usage: "Path where the Xcode project should be generated"),
             to: { 
                 $0.xcodeprojOptions = XcodeprojOptions(flags: $0.buildFlags, xcconfigOverrides: $0.absolutePathRelativeToWorkingDir($1), enableCodeCoverage: $2)
-                $0.outputPath = $0.absolutePathRelativeToWorkingDir($3) })
+                $0.outputPath = $3 })
 
         let pinParser = parser.add(subparser: PackageMode.pin.rawValue, overview: "")
         binder.bind(
@@ -392,10 +399,27 @@ public class SwiftPackageTool: SwiftTool<PackageToolOptions> {
                 usage: "The name of the package to unpin"),
             to: { $0.pinOptions.packageName = $1 })
 
+        let shellParser = parser.add(subparser: PackageMode.generateShellScript.rawValue, overview: "")
+        binder.bind(
+            positional: shellParser.add(
+                positional: "shell-name", kind: Shell.self,
+                usage: "The name of the shell to generate scripts for"),
+            to: { $0.shell = $1 })
+
         binder.bind(
             parser: parser,
             to: { $0.mode = PackageMode(rawValue: $1)! })
     }
+}
+
+enum Shell: String, StringEnumArgument {
+    case bash
+    case zsh
+
+    static var completion: ShellCompletion = .values([
+        (bash.rawValue, ""),
+        (zsh.rawValue, "")
+    ])
 }
 
 public class PackageToolOptions: ToolOptions {
@@ -434,8 +458,15 @@ public class PackageToolOptions: ToolOptions {
     enum ResolveToolMode: String, StringEnumArgument {
         case text
         case json
+
+        public static var completion: ShellCompletion = .values([
+            (text.rawValue, ""),
+            (json.rawValue, "")
+        ])
     }
     var resolveToolMode: ResolveToolMode = .text
+
+    var shell: Shell = .bash
 }
 
 public enum PackageMode: String, StringEnumArgument {
@@ -445,6 +476,7 @@ public enum PackageMode: String, StringEnumArgument {
     case edit
     case fetch
     case generateXcodeproj = "generate-xcodeproj"
+    case generateShellScript = "generate-shell-script"
     case initPackage = "init"
     case pin
     case reset
@@ -455,8 +487,30 @@ public enum PackageMode: String, StringEnumArgument {
     case update
     case version
     case help
+
+    // PackageMode is not used as an argument; completions will be
+    // provided by the subparsers.
+    public static var completion: ShellCompletion = .none
 }
 
-extension InitMode: StringEnumArgument {}
-extension ShowDependenciesMode: StringEnumArgument {}
-extension DescribeMode: StringEnumArgument {}
+extension InitMode: StringEnumArgument {
+    public static var completion: ShellCompletion = .values([
+        (empty.description, ""),
+        (library.description, ""),
+        (executable.description, ""),
+        (systemModule.description, "")
+    ])
+}
+extension ShowDependenciesMode: StringEnumArgument {
+    public static var completion: ShellCompletion = .values([
+        (text.description, ""),
+        (dot.description, ""),
+        (json.description, "")
+    ])
+}
+extension DescribeMode: StringEnumArgument {
+    public static var completion: ShellCompletion = .values([
+        (text.rawValue, ""),
+        (json.rawValue, "")
+    ])
+}

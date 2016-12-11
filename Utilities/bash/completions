@@ -1,36 +1,16 @@
 #!/bin/bash
-
 _swift() 
 {
-    declare -a cur prev shared_options
+    declare -a cur prev
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-
     COMPREPLY=()
-
     # completions for tools, and compiler flags (non-tool)
     if [[ $COMP_CWORD == 1 ]]; then
         COMPREPLY=( $(compgen -W "build package test" -- $cur) )
         _swift_compiler
         return
     fi
-
-    # shared options are available in all tools
-    shared_options="-C --chdir --color -v --verbose -Xcc -Xlinker -Xswiftc"
-    case $prev in
-        (-C|--chdir)
-            _filedir
-            return
-            ;;
-        (--color)
-            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
-            return
-            ;;
-        (-Xcc|-Xlinker|-Xswiftc)
-            return
-            ;;
-    esac
-
     # specify for each tool
     case ${COMP_WORDS[1]} in
         (build)
@@ -47,78 +27,503 @@ _swift()
             ;;
     esac
 }
-
 _swift_build()
 {
+    if [[ $COMP_CWORD == 2 ]]; then
+        COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --build-tests --clean --configuration -c" -- $cur) )
+        return
+    fi
+
     case $prev in
-        (-c|--configuration)
-            COMPREPLY=( $(compgen -W "debug release" -- $cur) )
+        (-Xcc)
             return
-            ;;
-        (--clean)
-            COMPREPLY=( $(compgen -W "build dist" -- $cur) )
-            ;;
+        ;;
+        (-Xswiftc)
+            return
+        ;;
+        (-Xlinker)
+            return
+        ;;
         (--build-path)
             _filedir
             return
-            ;;
+        ;;
+        (--chdir|-C)
+            _filedir
+            return
+        ;;
+        (--color)
+            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
+            return
+        ;;
+        (--enable-new-resolver)
+        ;;
+        (--version)
+        ;;
+        (--verbose|-v)
+        ;;
+        (--build-tests)
+        ;;
+        (--clean)
+        ;;
+        (--configuration|-c)
+            COMPREPLY=( $(compgen -W "debug release" -- $cur) )
+            return
+        ;;
     esac
-    COMPREPLY+=( $(compgen -W "-c --configuration --clean --build-path $shared_options" -- $cur) )
+
+    case ${COMP_WORDS[2]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --build-tests --clean --configuration -c" -- $cur) )
 }
 
 _swift_package()
 {
     if [[ $COMP_CWORD == 2 ]]; then
-        COMPREPLY=( $(compgen -W "init fetch update generate-xcodeproj show-dependencies dump-package --version" -- $cur) )
+        COMPREPLY=( $(compgen -W "update show-dependencies resolve fetch edit describe unpin clean reset unedit generate-xcodeproj init dump-package generate-shell-script pin -Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --version" -- $cur) )
         return
     fi
-    local package_options
-    package_options="--enable-code-coverage $shared_options"
+
+    case $prev in
+        (-Xcc)
+            return
+        ;;
+        (-Xswiftc)
+            return
+        ;;
+        (-Xlinker)
+            return
+        ;;
+        (--build-path)
+            _filedir
+            return
+        ;;
+        (--chdir|-C)
+            _filedir
+            return
+        ;;
+        (--color)
+            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
+            return
+        ;;
+        (--enable-new-resolver)
+        ;;
+        (--version)
+        ;;
+        (--verbose|-v)
+        ;;
+        (--version)
+        ;;
+    esac
+
+    case ${COMP_WORDS[2]} in
+        (update)
+            _swift_package_update
+            return
+        ;;
+        (show-dependencies)
+            _swift_package_show-dependencies
+            return
+        ;;
+        (resolve)
+            _swift_package_resolve
+            return
+        ;;
+        (fetch)
+            _swift_package_fetch
+            return
+        ;;
+        (edit)
+            _swift_package_edit
+            return
+        ;;
+        (describe)
+            _swift_package_describe
+            return
+        ;;
+        (unpin)
+            _swift_package_unpin
+            return
+        ;;
+        (clean)
+            _swift_package_clean
+            return
+        ;;
+        (reset)
+            _swift_package_reset
+            return
+        ;;
+        (unedit)
+            _swift_package_unedit
+            return
+        ;;
+        (generate-xcodeproj)
+            _swift_package_generate-xcodeproj
+            return
+        ;;
+        (init)
+            _swift_package_init
+            return
+        ;;
+        (dump-package)
+            _swift_package_dump-package
+            return
+        ;;
+        (generate-shell-script)
+            _swift_package_generate-shell-script
+            return
+        ;;
+        (pin)
+            _swift_package_pin
+            return
+        ;;
+    esac
+
+    COMPREPLY=( $(compgen -W "update show-dependencies resolve fetch edit describe unpin clean reset unedit generate-xcodeproj init dump-package generate-shell-script pin -Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --version" -- $cur) )
+}
+
+_swift_package_update()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--repin" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--repin)
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--repin" -- $cur) )
+}
+
+_swift_package_show-dependencies()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--format" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--format)
+            COMPREPLY=( $(compgen -W "text dot json" -- $cur) )
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--format" -- $cur) )
+}
+
+_swift_package_resolve()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--type" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--type)
+            COMPREPLY=( $(compgen -W "text json" -- $cur) )
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--type" -- $cur) )
+}
+
+_swift_package_fetch()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_edit()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--revision --branch" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--revision)
+            return
+        ;;
+        (--branch)
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--revision --branch" -- $cur) )
+}
+
+_swift_package_describe()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--type" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--type)
+            COMPREPLY=( $(compgen -W "text json" -- $cur) )
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--type" -- $cur) )
+}
+
+_swift_package_unpin()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_clean()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_reset()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_unedit()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--force" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--force)
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--force" -- $cur) )
+}
+
+_swift_package_generate-xcodeproj()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--xcconfig-overrides --enable-code-coverage --output" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--xcconfig-overrides)
+            return
+        ;;
+        (--enable-code-coverage)
+        ;;
+        (--output)
+            _filedir
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--xcconfig-overrides --enable-code-coverage --output" -- $cur) )
+}
+
+_swift_package_init()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--type" -- $cur) )
+        return
+    fi
+
     case $prev in
         (--type)
             COMPREPLY=( $(compgen -W "empty library executable system-module" -- $cur) )
             return
-            ;;
-        (--output)
-            _filedir
-            return
-            ;;
-        (--format)
-            COMPREPLY=( $(compgen -W "text json dot" -- $cur) )
-            return
-            ;;
-        (--input)
-            _filedir
-            return
-            ;;
+        ;;
     esac
-    case ${COMP_WORDS[2]} in
-        (init)
-            COMPREPLY=( $(compgen -W "--type $package_options" -- $cur) )
-            ;;
-        (generate-xcodeproj)
-            COMPREPLY=( $(compgen -W "--output $package_options" -- $cur) )
-            ;;
-        (show-dependencies)
-            COMPREPLY=( $(compgen -W "--format $package_options" -- $cur) )
-            ;;
-        (dump-package)
-            COMPREPLY=( $(compgen -W "--input $package_options" -- $cur) )
-            ;;
-        (*)
-            COMPREPLY=( $(compgen -W "$package_options" -- $cur) )
-            ;;
+
+    case ${COMP_WORDS[3]} in
     esac
+
+    COMPREPLY=( $(compgen -W "--type" -- $cur) )
+}
+
+_swift_package_dump-package()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_generate-shell-script()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "" -- $cur) )
+        return
+    fi
+
+    case $prev in
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "" -- $cur) )
+}
+
+_swift_package_pin()
+{
+    if [[ $COMP_CWORD == 3 ]]; then
+        COMPREPLY=( $(compgen -W "--enable-autopin --disable-autopin --all --message --version" -- $cur) )
+        return
+    fi
+
+    case $prev in
+        (--enable-autopin)
+        ;;
+        (--disable-autopin)
+        ;;
+        (--all)
+        ;;
+        (--message)
+            return
+        ;;
+        (--version)
+            return
+        ;;
+    esac
+
+    case ${COMP_WORDS[3]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "--enable-autopin --disable-autopin --all --message --version" -- $cur) )
 }
 
 _swift_test()
 {
+    if [[ $COMP_CWORD == 2 ]]; then
+        COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
+        return
+    fi
+
     case $prev in
-        (-s|--specifier)
+        (-Xcc)
             return
-            ;;
+        ;;
+        (-Xswiftc)
+            return
+        ;;
+        (-Xlinker)
+            return
+        ;;
+        (--build-path)
+            _filedir
+            return
+        ;;
+        (--chdir|-C)
+            _filedir
+            return
+        ;;
+        (--color)
+            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
+            return
+        ;;
+        (--enable-new-resolver)
+        ;;
+        (--version)
+        ;;
+        (--verbose|-v)
+        ;;
+        (--configuration|-c)
+            COMPREPLY=( $(compgen -W "debug release" -- $cur) )
+            return
+        ;;
+        (--skip-build)
+        ;;
+        (--list-tests|-l)
+        ;;
+        (--parallel)
+        ;;
+        (--specifier|-s)
+            return
+        ;;
     esac
-    COMPREPLY=( $(compgen -W "-s --specifier -l --list-tests --skip-build --version $shared_options" -- $cur) )
+
+    case ${COMP_WORDS[2]} in
+    esac
+
+    COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
 }
 
 _swift_compiler()
@@ -144,5 +549,4 @@ _swift_compiler()
     COMPREPLY+=( $(compgen -W "$args" -- $cur))
     _filedir
 }
-
 complete -F _swift swift

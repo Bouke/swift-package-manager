@@ -101,15 +101,15 @@ public class SwiftTool<Options: ToolOptions> {
 
         binder.bind(
             option: parser.add(
-                option: "--build-path", kind: String.self, 
+                option: "--build-path", kind: AbsolutePath.self,
                 usage: "Specify build/cache directory [default: ./.build]"),
-            to: { $0.buildPath = $0.absolutePathRelativeToWorkingDir($1) })
+            to: { $0.buildPath = $1 })
 
         binder.bind(
             option: parser.add(
-                option: "--chdir", shortName: "-C", kind: String.self,
+                option: "--chdir", shortName: "-C", kind: AbsolutePath.self,
                 usage: "Change working directory before any other operation"),
-            to: { $0.chdir = $0.absolutePathRelativeToWorkingDir($1) })
+            to: { $0.chdir = $1 })
 
         binder.bind(
             option: parser.add(option: "--color", kind: ColorWrap.Mode.self,

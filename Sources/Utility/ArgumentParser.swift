@@ -29,6 +29,19 @@ public enum ArgumentParserError: Swift.Error {
     case typeMismatch(String)
 }
 
+/// Various shell completions modes supplied by ArgumentKind.
+///
+/// - none:        offers no completions at all; e.g. for string identifier
+/// - unspecified: no specific completions, will offer tool's completions
+/// - filename:    offers filename completions
+/// - values:      offers completions from predefined list
+public enum ShellCompletion {
+    case none
+    case unspecified
+    case filename
+    case values([(value: String, description: String)])
+}
+
 /// A protocol representing the possible types of arguments.
 ///
 /// Conforming to this protocol will qualify the type to act as
@@ -41,6 +54,8 @@ public protocol ArgumentKind {
 
     /// This will be called for positional arguments with the value discovered.
     init?(arg: String)
+
+    static var completion: ShellCompletion { get }
 }
 
 // MARK:- ArgumentKind conformance for common types
@@ -53,6 +68,8 @@ extension String: ArgumentKind {
     public init(parser: inout ArgumentParserProtocol) throws {
         self = try parser.associatedArgumentValue ?? parser.next()
     }
+
+    public static let completion = ShellCompletion.none
 }
 
 extension Int: ArgumentKind {
@@ -68,6 +85,8 @@ extension Int: ArgumentKind {
         }
         self = intValue
     }
+
+    public static let completion = ShellCompletion.none
 }
 
 extension Bool: ArgumentKind {
@@ -88,6 +107,8 @@ extension Bool: ArgumentKind {
             self = true
         }
     }
+
+    public static var completion: ShellCompletion = .unspecified
 }
 
 /// A protocol which implements ArgumentKind for string initializable enums.
@@ -193,15 +214,15 @@ public final class PositionalArgument<Kind>: ArgumentProtocol {
 /// A type-erased argument.
 ///
 /// Note: Only used for argument parsing purpose.
-fileprivate final class AnyArgument: ArgumentProtocol, CustomStringConvertible {
+public final class AnyArgument: ArgumentProtocol, CustomStringConvertible {
     typealias ArgumentKindTy = Any
 
-    let name: String
+    public let name: String
     let usage: String?
-    let shortName: String?
+    public let shortName: String?
 
     /// The argument kind this holds, used while initializing that argument.
-    let kind: ArgumentKind.Type
+    public let kind: ArgumentKind.Type
 
     /// True if the argument kind is of array type.
     let isArray: Bool
@@ -223,7 +244,7 @@ fileprivate final class AnyArgument: ArgumentProtocol, CustomStringConvertible {
         isArray = true
     }
 
-    var description: String {
+    public var description: String {
         return "Argument(\(name))"
     }
 }
@@ -320,10 +341,10 @@ public final class ArgumentParser {
     }
 
     /// The mapping of subparsers to their subcommand.
-    private var subparsers: [String: ArgumentParser] = [:]
+    public private(set) var subparsers: [String: ArgumentParser] = [:]
 
     /// List of arguments added to this parser.
-    private var options = [AnyArgument]()
+    public private(set) var options = [AnyArgument]()
     private var positionalArgs = [AnyArgument]()
 
     // If provided, will be substituted instead of arg0 in usage text.
