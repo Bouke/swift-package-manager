@@ -241,7 +241,7 @@ fileprivate func zsh(root: ArgumentParser, print: (String) -> ()) {
     print("_swift")
 }
 
-let removeDefaultRegex = try! NSRegularExpression(pattern: "\\[default: .+?\\]", options: [])
+fileprivate let removeDefaultRegex = try! NSRegularExpression(pattern: "\\[default: .+?\\]", options: [])
 
 fileprivate func zsh_tool(_ parser: ArgumentParser, name: String, position: Int, print: (String) -> ()) {
     print("\(name)() {")
