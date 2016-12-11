@@ -5,7 +5,6 @@ _swift()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     COMPREPLY=()
-    # completions for tools, and compiler flags (non-tool)
     if [[ $COMP_CWORD == 1 ]]; then
         COMPREPLY=( $(compgen -W "build package test" -- $cur) )
         _swift_compiler
@@ -13,27 +12,79 @@ _swift()
     fi
     # specify for each tool
     case ${COMP_WORDS[1]} in
+        (test)
+            _swift_test
+            ;;
         (build)
             _swift_build
             ;;
         (package)
             _swift_package
             ;;
-        (test)
-            _swift_test
-            ;;
         (*)
             _swift_compiler
             ;;
     esac
 }
+_swift_test()
+{
+    if [[ $COMP_CWORD == 2 ]]; then
+        COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
+        return
+    fi
+    case $prev in
+        (-Xcc)
+            return
+        ;;
+        (-Xswiftc)
+            return
+        ;;
+        (-Xlinker)
+            return
+        ;;
+        (--build-path)
+            _filedir
+            return
+        ;;
+        (--chdir|-C)
+            _filedir
+            return
+        ;;
+        (--color)
+            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
+            return
+        ;;
+        (--enable-new-resolver)
+        ;;
+        (--version)
+        ;;
+        (--verbose|-v)
+        ;;
+        (--configuration|-c)
+            COMPREPLY=( $(compgen -W "debug release" -- $cur) )
+            return
+        ;;
+        (--skip-build)
+        ;;
+        (--list-tests|-l)
+        ;;
+        (--parallel)
+        ;;
+        (--specifier|-s)
+            return
+        ;;
+    esac
+    case ${COMP_WORDS[2]} in
+    esac
+    COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
+}
+
 _swift_build()
 {
     if [[ $COMP_CWORD == 2 ]]; then
         COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --build-tests --clean --configuration -c" -- $cur) )
         return
     fi
-
     case $prev in
         (-Xcc)
             return
@@ -71,10 +122,8 @@ _swift_build()
             return
         ;;
     esac
-
     case ${COMP_WORDS[2]} in
     esac
-
     COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --build-tests --clean --configuration -c" -- $cur) )
 }
 
@@ -84,7 +133,6 @@ _swift_package()
         COMPREPLY=( $(compgen -W "update show-dependencies resolve fetch edit describe unpin clean reset unedit generate-xcodeproj init dump-package generate-shell-script pin -Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --version" -- $cur) )
         return
     fi
-
     case $prev in
         (-Xcc)
             return
@@ -116,7 +164,6 @@ _swift_package()
         (--version)
         ;;
     esac
-
     case ${COMP_WORDS[2]} in
         (update)
             _swift_package_update
@@ -179,7 +226,6 @@ _swift_package()
             return
         ;;
     esac
-
     COMPREPLY=( $(compgen -W "update show-dependencies resolve fetch edit describe unpin clean reset unedit generate-xcodeproj init dump-package generate-shell-script pin -Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --version" -- $cur) )
 }
 
@@ -189,15 +235,12 @@ _swift_package_update()
         COMPREPLY=( $(compgen -W "--repin" -- $cur) )
         return
     fi
-
     case $prev in
         (--repin)
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--repin" -- $cur) )
 }
 
@@ -207,17 +250,14 @@ _swift_package_show-dependencies()
         COMPREPLY=( $(compgen -W "--format" -- $cur) )
         return
     fi
-
     case $prev in
         (--format)
             COMPREPLY=( $(compgen -W "text dot json" -- $cur) )
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--format" -- $cur) )
 }
 
@@ -227,17 +267,14 @@ _swift_package_resolve()
         COMPREPLY=( $(compgen -W "--type" -- $cur) )
         return
     fi
-
     case $prev in
         (--type)
             COMPREPLY=( $(compgen -W "text json" -- $cur) )
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--type" -- $cur) )
 }
 
@@ -247,13 +284,10 @@ _swift_package_fetch()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -263,7 +297,6 @@ _swift_package_edit()
         COMPREPLY=( $(compgen -W "--revision --branch" -- $cur) )
         return
     fi
-
     case $prev in
         (--revision)
             return
@@ -272,10 +305,8 @@ _swift_package_edit()
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--revision --branch" -- $cur) )
 }
 
@@ -285,17 +316,14 @@ _swift_package_describe()
         COMPREPLY=( $(compgen -W "--type" -- $cur) )
         return
     fi
-
     case $prev in
         (--type)
             COMPREPLY=( $(compgen -W "text json" -- $cur) )
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--type" -- $cur) )
 }
 
@@ -305,13 +333,10 @@ _swift_package_unpin()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -321,13 +346,10 @@ _swift_package_clean()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -337,13 +359,10 @@ _swift_package_reset()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -353,15 +372,12 @@ _swift_package_unedit()
         COMPREPLY=( $(compgen -W "--force" -- $cur) )
         return
     fi
-
     case $prev in
         (--force)
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--force" -- $cur) )
 }
 
@@ -371,7 +387,6 @@ _swift_package_generate-xcodeproj()
         COMPREPLY=( $(compgen -W "--xcconfig-overrides --enable-code-coverage --output" -- $cur) )
         return
     fi
-
     case $prev in
         (--xcconfig-overrides)
             return
@@ -383,10 +398,8 @@ _swift_package_generate-xcodeproj()
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--xcconfig-overrides --enable-code-coverage --output" -- $cur) )
 }
 
@@ -396,17 +409,14 @@ _swift_package_init()
         COMPREPLY=( $(compgen -W "--type" -- $cur) )
         return
     fi
-
     case $prev in
         (--type)
             COMPREPLY=( $(compgen -W "empty library executable system-module" -- $cur) )
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--type" -- $cur) )
 }
 
@@ -416,13 +426,10 @@ _swift_package_dump-package()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -432,13 +439,10 @@ _swift_package_generate-shell-script()
         COMPREPLY=( $(compgen -W "" -- $cur) )
         return
     fi
-
     case $prev in
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "" -- $cur) )
 }
 
@@ -448,7 +452,6 @@ _swift_package_pin()
         COMPREPLY=( $(compgen -W "--enable-autopin --disable-autopin --all --message --version" -- $cur) )
         return
     fi
-
     case $prev in
         (--enable-autopin)
         ;;
@@ -463,90 +466,100 @@ _swift_package_pin()
             return
         ;;
     esac
-
     case ${COMP_WORDS[3]} in
     esac
-
     COMPREPLY=( $(compgen -W "--enable-autopin --disable-autopin --all --message --version" -- $cur) )
-}
-
-_swift_test()
-{
-    if [[ $COMP_CWORD == 2 ]]; then
-        COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
-        return
-    fi
-
-    case $prev in
-        (-Xcc)
-            return
-        ;;
-        (-Xswiftc)
-            return
-        ;;
-        (-Xlinker)
-            return
-        ;;
-        (--build-path)
-            _filedir
-            return
-        ;;
-        (--chdir|-C)
-            _filedir
-            return
-        ;;
-        (--color)
-            COMPREPLY=( $(compgen -W "auto always never" -- $cur) )
-            return
-        ;;
-        (--enable-new-resolver)
-        ;;
-        (--version)
-        ;;
-        (--verbose|-v)
-        ;;
-        (--configuration|-c)
-            COMPREPLY=( $(compgen -W "debug release" -- $cur) )
-            return
-        ;;
-        (--skip-build)
-        ;;
-        (--list-tests|-l)
-        ;;
-        (--parallel)
-        ;;
-        (--specifier|-s)
-            return
-        ;;
-    esac
-
-    case ${COMP_WORDS[2]} in
-    esac
-
-    COMPREPLY=( $(compgen -W "-Xcc -Xswiftc -Xlinker --build-path --chdir -C --color --enable-new-resolver --version --verbose -v --configuration -c --skip-build --list-tests -l --parallel --specifier -s" -- $cur) )
 }
 
 _swift_compiler()
 {
     case $prev in
         (-assert-config)
-            COMPREPLY=( $(compgen -W "Debug Release Unchecked DisableReplacement" -- $cur) )
             return
-            ;;
-        (-D|-framework|-j|-l|-module-link-name|-module-name|-num-threads|-sdk|-target-cpu|-target|-use-ld)
+        ;;
+        (-continue-building-after-errors)
+        ;;
+        (-D)
             return
-            ;;
-        (-F|-index-store-path|-I|-L|-module-cache-path)
-            _filedir
-            ;;
+        ;;
+        (-framework)
+            return
+        ;;
+        (-F)
+            return
+        ;;
+        (-gdwarf-types)
+        ;;
+        (-gline-tables-only)
+        ;;
+        (-gnone)
+        ;;
+        (-g)
+        ;;
+        (-help)
+        ;;
+        (-I)
+            return
+        ;;
+        (-j)
+            return
+        ;;
+        (-L)
+            return
+        ;;
+        (-module-cache-path)
+            return
+        ;;
+        (-module-link-name)
+            return
+        ;;
+        (-module-name)
+            return
+        ;;
+        (-nostdimport)
+        ;;
+        (-num-threads)
+            return
+        ;;
+        (-Onone)
+        ;;
+        (-Ounchecked)
+        ;;
+        (-O)
+        ;;
+        (-sdk)
+            return
+        ;;
+        (-static-executable)
+        ;;
+        (-static-stdlib)
+        ;;
+        (-suppress-warnings)
+        ;;
+        (-swift-version)
+            return
+        ;;
+        (-target-cpu)
+            return
+        ;;
+        (-target)
+            return
+        ;;
+        (-version)
+        ;;
+        (-v)
+        ;;
+        (-warnings-as-errors)
+        ;;
+        (-Xcc)
+            return
+        ;;
+        (-Xlinker)
+            return
+        ;;
     esac
-    local args
-    args="-assert-config -D -framework -F -gdwarf-types -gline-tables-only \
-         -gnone -g -help -index-store-path -I -j -L -l -module-cache-path \
-         -module-link-name -module-name -nostdimport -num-threads -Onone \
-         -Ounchecked -O -sdk -static-stdlib -suppress-warnings -target-cpu \
-         -target -use-ld -version -v -warnings-as-errors -Xcc -Xlinker"
-    COMPREPLY+=( $(compgen -W "$args" -- $cur))
+    COMPREPLY+=( $(compgen -W "-assert-config -continue-building-after-errors -D -framework -F -gdwarf-types -gline-tables-only -gnone -g -help -I -j -L -module-cache-path -module-link-name -module-name -nostdimport -num-threads -Onone -Ounchecked -O -sdk -static-executable -static-stdlib -suppress-warnings -swift-version -target-cpu -target -version -v -warnings-as-errors -Xcc -Xlinker" -- $cur) )
     _filedir
 }
+
 complete -F _swift swift

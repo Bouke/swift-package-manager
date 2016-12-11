@@ -12,7 +12,61 @@ import Foundation
 import Basic
 import Utility
 
-func bash_template(print: (String) -> ()) {
+// todo: support positional arguments; eg generate-shell-script [shell-name]
+
+func generateShellScript(forShell shell: Shell, print: (String) -> ()) {
+    let root = ArgumentParser(usage: "", overview: "Swift compiler")
+    root.add(subparser: "build", parser: SwiftBuildTool(args: []).parser)
+    root.add(subparser: "package", parser: SwiftPackageTool(args: []).parser)
+    root.add(subparser: "test", parser: SwiftTestTool(args: []).parser)
+
+    // Swift compiler flags
+    _ = root.add(option: "-assert-config", kind: String.self, usage: "Specify the assert_configuration replacement. Possible values are Debug, Release, Unchecked, DisableReplacement.")
+    _ = root.add(option: "-continue-building-after-errors", kind: Bool.self, usage: "Continue building, even after errors are encountered")
+    _ = root.add(option: "-D", kind: String.self, usage: "Marks a conditional compilation flag as true")
+    _ = root.add(option: "-framework", kind: String.self, usage: "Specifies a framework which should be linked against")
+    _ = root.add(option: "-F", kind: String.self, usage: "Add directory to framework search path")
+    _ = root.add(option: "-gdwarf-types", kind: Bool.self, usage: "Emit full DWARF type info.")
+    _ = root.add(option: "-gline-tables-only", kind: Bool.self, usage: "Emit minimal debug info for backtraces only")
+    _ = root.add(option: "-gnone", kind: Bool.self, usage: "Don't emit debug info")
+    _ = root.add(option: "-g", kind: Bool.self, usage: "Emit debug info. This is the preferred setting for debugging with LLDB.")
+    _ = root.add(option: "-help", kind: Bool.self, usage: "Display available options")
+    _ = root.add(option: "-I", kind: String.self, usage: "Add directory to the import search path")
+    _ = root.add(option: "-j", kind: Int.self, usage: "Number of commands to execute in parallel")
+    _ = root.add(option: "-L", kind: String.self, usage: "Add directory to library link search path")
+//    -l<value>              Specifies a library which should be linked against
+    _ = root.add(option: "-module-cache-path", kind: String.self, usage: "Specifies the Clang module cache path")
+    _ = root.add(option: "-module-link-name", kind: String.self, usage: "Library to link against when using this module")
+    _ = root.add(option: "-module-name", kind: String.self, usage: "Name of the module to build")
+    _ = root.add(option: "-nostdimport", kind: Bool.self, usage: "Don't search the standard library import path for modules")
+    _ = root.add(option: "-num-threads", kind: Int.self, usage: "Enable multi-threading and specify number of threads")
+    _ = root.add(option: "-Onone", kind: Bool.self, usage: "Compile without any optimization")
+    _ = root.add(option: "-Ounchecked", kind: Bool.self, usage: "Compile with optimizations and remove runtime safety checks")
+    _ = root.add(option: "-O", kind: Bool.self, usage: "Compile with optimizations")
+    _ = root.add(option: "-sdk", kind: String.self, usage: "Compile against <sdk>")
+    _ = root.add(option: "-static-executable", kind: Bool.self, usage: "Statically link the executable")
+    _ = root.add(option: "-static-stdlib", kind: Bool.self, usage: "Statically link the Swift standard library")
+    _ = root.add(option: "-suppress-warnings", kind: Bool.self, usage: "Suppress all warnings")
+    _ = root.add(option: "-swift-version", kind: String.self, usage: "Interpret input according to a specific Swift language version number")
+    _ = root.add(option: "-target-cpu", kind: String.self, usage: "Generate code for a particular CPU variant")
+    _ = root.add(option: "-target", kind: String.self, usage: "Generate code for the given target")
+//    -use-ld=<value>        Specifies the linker to be used
+    _ = root.add(option: "-version", kind: Bool.self, usage: "Print version information and exit")
+    _ = root.add(option: "-v", kind: Bool.self, usage: "Show commands to run and use verbose output")
+    _ = root.add(option: "-warnings-as-errors", kind: Bool.self, usage: "Treat warnings as errors")
+    _ = root.add(option: "-Xcc", kind: String.self, usage: "Pass <arg> to the C/C++/Objective-C compiler")
+    _ = root.add(option: "-Xlinker", kind: String.self, usage: "Specifies an option which should be passed to the linker")
+
+    switch shell {
+    case .bash: bash(root: root, print: print)
+    case .zsh: zsh(root: root, print: print)
+    }
+}
+
+
+// MARK:- BASH
+
+fileprivate func bash(root: ArgumentParser, print: (String) -> ()) {
     print("#!/bin/bash")
 
     print("_swift() ")
@@ -23,7 +77,7 @@ func bash_template(print: (String) -> ()) {
 
     print("    COMPREPLY=()")
 
-    print("    # completions for tools, and compiler flags (non-tool)")
+    // completions for tools, and compiler flags (non-tool)
     print("    if [[ $COMP_CWORD == 1 ]]; then")
     print("        COMPREPLY=( $(compgen -W \"build package test\" -- $cur) )")
     print("        _swift_compiler")
@@ -32,55 +86,30 @@ func bash_template(print: (String) -> ()) {
 
     print("    # specify for each tool")
     print("    case ${COMP_WORDS[1]} in")
-    print("        (build)")
-    print("            _swift_build")
-    print("            ;;")
-    print("        (package)")
-    print("            _swift_package")
-    print("            ;;")
-    print("        (test)")
-    print("            _swift_test")
-    print("            ;;")
+    for (name, _) in root.subparsers {
+        print("        (\(name))")
+        print("            _swift_\(name)")
+        print("            ;;")
+    }
     print("        (*)")
     print("            _swift_compiler")
     print("            ;;")
     print("    esac")
     print("}")
 
-    bash_parser(SwiftBuildTool(args: []).parser, name: "_swift_build", position: 2, print: print)
-    bash_parser(SwiftPackageTool(args: []).parser, name: "_swift_package", position: 2, print: print)
-    bash_parser(SwiftTestTool(args: []).parser, name: "_swift_test", position: 2, print: print)
-
-    print("_swift_compiler()")
-    print("{")
-    print("    case $prev in")
-    print("        (-assert-config)")
-    print("            COMPREPLY=( $(compgen -W \"Debug Release Unchecked DisableReplacement\" -- $cur) )")
-    print("            return")
-    print("            ;;")
-    print("        (-D|-framework|-j|-l|-module-link-name|-module-name|-num-threads|-sdk|-target-cpu|-target|-use-ld)")
-    print("            return")
-    print("            ;;")
-    print("        (-F|-index-store-path|-I|-L|-module-cache-path)")
-    print("            _filedir")
-    print("            ;;")
-    print("    esac")
-    print("    local args")
-    print("    args=\"-assert-config -D -framework -F -gdwarf-types -gline-tables-only \\")
-    print("         -gnone -g -help -index-store-path -I -j -L -l -module-cache-path \\")
-    print("         -module-link-name -module-name -nostdimport -num-threads -Onone \\")
-    print("         -Ounchecked -O -sdk -static-stdlib -suppress-warnings -target-cpu \\")
-    print("         -target -use-ld -version -v -warnings-as-errors -Xcc -Xlinker\"")
-    print("    COMPREPLY+=( $(compgen -W \"$args\" -- $cur))")
-    print("    _filedir")
-    print("}")
+    for (name, parser) in root.subparsers {
+        bash_tool(parser, name: "_swift_\(name)", position: 2, print: print)
+    }
+    bash_compiler(root, print: print)
 
     print("complete -F _swift swift")
 }
 
-fileprivate func bash_parser(_ parser: ArgumentParser, name: String, position: Int, print: (String) -> ()) -> () {
+fileprivate func bash_tool(_ parser: ArgumentParser, name: String, position: Int, print: (String) -> ()) -> () {
     print("\(name)()")
     print("{")
+
+    // suggest subparsers in addition to other arguments
     print("    if [[ $COMP_CWORD == \(position) ]]; then")
     var completions = [String]()
     for (subName, _) in parser.subparsers {
@@ -95,7 +124,55 @@ fileprivate func bash_parser(_ parser: ArgumentParser, name: String, position: I
     print("        COMPREPLY=( $(compgen -W \"\(completions.joined(separator: " "))\" -- $cur) )")
     print("        return")
     print("    fi")
+
+    // completions based on last word
+    bash_prev_next(parser, print: print)
+
+    // forward to subparser
+    print("    case ${COMP_WORDS[\(position)]} in")
+    for (subName, _) in parser.subparsers {
+        print("        (\(subName))")
+        print("            \(name)_\(subName)")
+        print("            return")
+        print("        ;;")
+    }
+    print("    esac")
+
+    // other arguments
+    print("    COMPREPLY=( $(compgen -W \"\(completions.joined(separator: " "))\" -- $cur) )")
+    print("}")
     print("")
+
+    for (subName, subParser) in parser.subparsers {
+        bash_tool(subParser, name: "\(name)_\(subName)", position: position + 1, print: print)
+    }
+}
+
+fileprivate func bash_compiler(_ parser: ArgumentParser, print: (String) -> ()) {
+    print("_swift_compiler()")
+    print("{")
+
+    // completions based on last word
+    bash_prev_next(parser, print: print)
+
+    // other arguments
+    var completions = [String]()
+    for option in parser.options {
+        completions.append(option.name)
+        if let shortName = option.shortName {
+            completions.append(shortName)
+        }
+    }
+    print("    COMPREPLY+=( $(compgen -W \"\(completions.joined(separator: " "))\" -- $cur) )")
+
+    // compiler accepts filenames
+    print("    _filedir")
+
+    print("}")
+    print("")
+}
+
+fileprivate func bash_prev_next(_ parser: ArgumentParser, print: (String) -> ()) {
     print("    case $prev in")
     for option in parser.options {
         let flags = [option.name] + (option.shortName.map({[$0]}) ?? [])
@@ -116,46 +193,18 @@ fileprivate func bash_parser(_ parser: ArgumentParser, name: String, position: I
         print("        ;;")
     }
     print("    esac")
-    print("")
-
-    // forward to subparser
-    print("    case ${COMP_WORDS[\(position)]} in")
-    for (subName, _) in parser.subparsers {
-        print("        (\(subName))")
-        print("            \(name)_\(subName)")
-        print("            return")
-        print("        ;;")
-    }
-    print("    esac")
-    print("")
-    print("    COMPREPLY=( $(compgen -W \"\(completions.joined(separator: " "))\" -- $cur) )")
-    print("}")
-    print("")
-
-    for (subName, subParser) in parser.subparsers {
-        bash_parser(subParser, name: "\(name)_\(subName)", position: position + 1, print: print)
-    }
 }
 
 
-func zsh_template(print: (String) -> ()) {
+// MARK:- ZSH
+
+fileprivate func zsh(root: ArgumentParser, print: (String) -> ()) {
     print("#compdef swift")
     print("local context state state_descr line")
     print("typeset -A opt_args")
     print("")
     print("_swift() {")
-    print("    declare -a shared_options")
-    print("    shared_options=(")
-    print("        '(-C --chdir)'{-C,--chdir}\"[Change working directory before any other operation]: :_files\"")
-    print("        \"--color[Specify color mode (auto|always|never)]: :{_values \"mode\" auto always never}\"")
-    print("        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]'")
-    print("        \"-Xcc[Pass flag through to all C compiler invocations]: : \"")
-    print("        \"-Xlinker[Pass flag through to all linker invocations]: : \"")
-    print("        \"-Xswiftc[Pass flag through to all Swift compiler invocations]: : \"")
-    print("    )")
-    print("")
     print("    _arguments -C \\")
-    print("        '(- :)--help[prints the synopsis and a list of the most commonly used commands]: :->arg' \\")
     print("        '(-): :->command' \\")
     print("        '(-)*:: :->arg' && return")
     print("")
@@ -163,9 +212,9 @@ func zsh_template(print: (String) -> ()) {
     print("        (command)")
     print("            local tools")
     print("            tools=(")
-    print("                'build:build the package'")
-    print("                'package:package management'")
-    print("                'test:run tests'")
+    for (name, parser) in root.subparsers {
+        print("                '\(name):\(parser.overview)'")
+    }
     print("            )")
     print("            _alternative \\")
     print("                'tools:common:{_describe \"tool\" tools }' \\")
@@ -173,15 +222,11 @@ func zsh_template(print: (String) -> ()) {
     print("            ;;")
     print("        (arg)")
     print("            case ${words[1]} in")
-    print("                (build)")
-    print("                    _swift_build")
-    print("                    ;;")
-    print("                (package)")
-    print("                    _swift_package")
-    print("                    ;;")
-    print("                (test)")
-    print("                    _swift_test")
-    print("                    ;;")
+    for (name, _) in root.subparsers {
+        print("                (\(name))")
+        print("                    _swift_\(name)")
+        print("                    ;;")
+    }
     print("                (*)")
     print("                    _swift_compiler")
     print("                    ;;")
@@ -189,84 +234,89 @@ func zsh_template(print: (String) -> ()) {
     print("            ;;")
     print("    esac")
     print("}")
-    print("")
-    zsh_parser(SwiftBuildTool(args: []).parser, name: "_swift_build", print: print)
-    zsh_parser(SwiftPackageTool(args: []).parser, name: "_swift_package", print: print)
-    zsh_parser(SwiftTestTool(args: []).parser, name: "_swift_test", print: print)
-    print("_swift_compiler() {")
-    print("    declare -a build_options")
-    print("    build_options=(")
-    print("        '-assert-config[Specify the assert_configuration replacement.]: :{_values \"\" Debug Release Unchecked DisableReplacement}'")
-    print("        '-D[Marks a conditional compilation flag as true]: : '")
-    print("        '-framework[Specifies a framework which should be linked against]: : '")
-    print("        '-F[Add directory to framework search path]: :_files'")
-    print("        '-gdwarf-types[Emit full DWARF type info.]'")
-    print("        '-gline-tables-only[Emit minimal debug info for backtraces only]'")
-    print("        \"-gnone[Don't emit debug info]\"")
-    print("        '-g[Emit debug info. This is the preferred setting for debugging with LLDB.]'")
-    print("        '-help[Display available options]'")
-    print("        '-index-store-path[Store indexing data to <path>]: :_files'")
-    print("        '-I[Add directory to the import search path]: :_files'")
-    print("        '-j[Number of commands to execute in parallel]: : '")
-    print("        '-L[Add directory to library link search path]: :_files'")
-    print("        '-l-[Specifies a library which should be linked against]: : '")
-    print("        '-module-cache-path[Specifies the Clang module cache path]: :_files'")
-    print("        '-module-link-name[Library to link against when using this module]: : '")
-    print("        '-module-name[Name of the module to build]: : '")
-    print("        \"-nostdimport[Don't search the standard library import path for modules]\"")
-    print("        '-num-threads[Enable multi-threading and specify number of threads]: : '")
-    print("        '-Onone[Compile without any optimization]'")
-    print("        '-Ounchecked[Compile with optimizations and remove runtime safety checks]'")
-    print("        '-O[Compile with optimizations]'")
-    print("        '-sdk[Compile against <sdk>]: : '")
-    print("        '-static-stdlib[Statically link the Swift standard library]'")
-    print("        '-suppress-warnings[Suppress all warnings]'")
-    print("        '-target-cpu[Generate code for a particular CPU variant]: : '")
-    print("        '-target[Generate code for the given target]: : '")
-    print("        '-use-ld=-[Specifies the linker to be used]'")
-    print("        '-version[Print version information and exit]'")
-    print("        '-v[Show commands to run and use verbose output]'")
-    print("        '-warnings-as-errors[Treat warnings as errors]'")
-    print("        '-Xcc[Pass <arg> to the C/C++/Objective-C compiler]: : '")
-    print("        '-Xlinker[Specifies an option which should be passed to the linker]: : '")
-    print("        '*:inputs:_files'")
-    print("    )")
-    print("    _arguments $build_options")
-    print("}")
-    print("")
+    for (name, parser) in root.subparsers {
+        zsh_tool(parser, name: "_swift_\(name)", position: 0, print: print)
+    }
+    zsh_compiler(root, print: print)
     print("_swift")
 }
 
 let removeDefaultRegex = try! NSRegularExpression(pattern: "\\[default: .+?\\]", options: [])
 
-fileprivate func zsh_parser(_ parser: ArgumentParser, name: String, print: (String) -> ()) {
-    // todo: subparsers
+fileprivate func zsh_tool(_ parser: ArgumentParser, name: String, position: Int, print: (String) -> ()) {
     print("\(name)() {")
-    print("    local -a arguments")
     print("    arguments=(")
     for option in parser.options {
-        let flags: String
-        switch option.shortName {
-        case .none: flags = "\(option.name)"
-        case let shortName?: flags = "(\(option.name) \(shortName))'{\(option.name),\(shortName)}'"
-        }
-
-        let completions: String
-        switch option.kind.completion {
-        case .none: completions = ": : "
-        case .unspecified: completions = ""
-        case .filename: completions = ": :_files"
-        case let .values(values): completions = ": :{_values \"\" \(values.map({ $0.value }).joined(separator: " "))}"
-        }
-
-        let description = removeDefaultRegex.replace(in: option.usage ?? "", with: "")
-
-        print("        '\(flags)[\(description)]\(completions)'")
+        print(zsh_argument(option))
+    }
+    if parser.subparsers.count > 0 {
+        print("        '(-): :->command'")
+        print("        '(-)*:: :->arg'")
     }
     print("    )")
-    print("    _arguments $arguments")
+    print("    _arguments $arguments && return")
+
+    if parser.subparsers.count > 0 {
+        print("    case $state in")
+        print("        (command)")
+        print("            local modes")
+        print("            modes=(")
+        for (subName, subParser) in parser.subparsers {
+            print("                '\(subName):\(subParser.overview)'")
+        }
+        print("            )")
+        print("            _describe \"mode\" modes")
+        print("            ;;")
+        print("        (arg)")
+        print("            case ${words[1]} in")
+        for (subName, _) in parser.subparsers {
+            print("                (\(subName))")
+            print("                    \(name)_\(subName)")
+            print("                    ;;")
+        }
+        print("            esac")
+        print("            ;;")
+        print("    esac")
+    }
     print("}")
     print("")
+
+    for (subName, subParser) in parser.subparsers {
+        zsh_tool(subParser, name: "\(name)_\(subName)", position: position + 1, print: print)
+    }
+}
+
+fileprivate func zsh_compiler(_ parser: ArgumentParser, print: (String) -> ()) {
+    print("_swift_compiler() {")
+    print("    arguments=(")
+    for option in parser.options {
+        print(zsh_argument(option))
+    }
+    print("        '*:inputs:_files'")
+    print("    )")
+    print("    _arguments $arguments && return")
+    print("}")
+    print("")
+}
+
+fileprivate func zsh_argument(_ argument: AnyArgument) -> String {
+    let flags: String
+    switch argument.shortName {
+    case .none: flags = "\(argument.name)"
+    case let shortName?: flags = "(\(argument.name) \(shortName))\"{\(argument.name),\(shortName)}\""
+    }
+
+    let completions: String
+    switch argument.kind.completion {
+    case .none: completions = ": : "
+    case .unspecified: completions = ""
+    case .filename: completions = ": :_files"
+    case let .values(values): completions = ": :{_values '' \(values.map({ $0.value }).joined(separator: " "))}"
+    }
+
+    let description = removeDefaultRegex.replace(in: argument.usage ?? "", with: "").replacingOccurrences(of: "\"", with: "\\\"")
+
+    return "        \"\(flags)[\(description)]\(completions)\""
 }
 
 fileprivate extension NSRegularExpression {

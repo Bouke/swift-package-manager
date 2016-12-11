@@ -354,7 +354,7 @@ public final class ArgumentParser {
     let usage: String
 
     /// Overview text of this parser.
-    let overview: String
+    public let overview: String
 
     /// The parser contains one and only optional positional argument.
     private var optionalPositionalArg = false
@@ -404,6 +404,11 @@ public final class ArgumentParser {
         return arg
     }
     
+    /// Add a parser with a subcommand name.
+    public func add(subparser command: String, parser: ArgumentParser) {
+        subparsers[command] = parser
+    }
+
     /// Add a parser with a subcommand name and its corresponding overview.
     @discardableResult
     public func add(subparser command: String, overview: String) -> ArgumentParser {

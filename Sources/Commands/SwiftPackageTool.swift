@@ -234,11 +234,7 @@ public class SwiftPackageTool: SwiftTool<PackageToolOptions> {
             try workspace.pinsStore.unpin(package: packageName)
 
         case .generateShellScript:
-            switch options.shell {
-            case .bash: bash_template(print: { print($0) })
-            case .zsh: zsh_template(print: { print($0) })
-            default: break
-            }
+            generateShellScript(forShell: options.shell, print: { print($0) })
         }
     }
 
