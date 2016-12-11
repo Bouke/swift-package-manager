@@ -218,7 +218,7 @@ public final class AnyArgument: ArgumentProtocol, CustomStringConvertible {
     typealias ArgumentKindTy = Any
 
     public let name: String
-    let usage: String?
+    public let usage: String?
     public let shortName: String?
 
     /// The argument kind this holds, used while initializing that argument.

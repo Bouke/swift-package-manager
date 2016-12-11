@@ -7,7 +7,7 @@ _swift() {
     shared_options=(
         '(-C --chdir)'{-C,--chdir}"[Change working directory before any other operation]: :_files"
         "--color[Specify color mode (auto|always|never)]: :{_values "mode" auto always never}"
-        '(-v --verbose)'{-v,--verbose}"[Increase verbosity of informational output]"
+        '(-v --verbose)'{-v,--verbose}'[Increase verbosity of informational output]'
         "-Xcc[Pass flag through to all C compiler invocations]: : "
         "-Xlinker[Pass flag through to all linker invocations]: : "
         "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
@@ -50,73 +50,60 @@ _swift() {
 }
 
 _swift_build() {
-    _arguments \
-        '(-c --configuration)'{-c,--configuration}'[Build with configuration]:MODES:(debug release)' \
-        '--clean[Delete artifacts (build|dist) (default: build)]:MODES:(build dist)' \
-        $shared_options \
-        '--build-path[Specify build directory]: :_files'
+    local -a arguments
+    arguments=(
+        '-Xcc[Pass flag through to all C compiler invocations]: : '
+        '-Xswiftc[Pass flag through to all Swift compiler invocations]: : '
+        '-Xlinker[Pass flag through to all linker invocations]: : '
+        '--build-path[Specify build/cache directory ]: :_files'
+        '(--chdir -C)'{--chdir,-C}'[Change working directory before any other operation]: :_files'
+        '--color[Specify color mode (auto|always|never) ]: :{_values "" auto always never}'
+        '--enable-new-resolver[]'
+        '--version[]'
+        '(--verbose -v)'{--verbose,-v}'[Increase verbosity of informational output]'
+        '--build-tests[]'
+        '--clean[]'
+        '(--configuration -c)'{--configuration,-c}'[Build with configuration (debug|release) ]: :{_values "" debug release}'
+    )
+    _arguments $arguments
 }
 
 _swift_package() {
-    local -a commands
-    commands=(
-        'init:Initialize a new package'
-        'fetch:Fetch package dependencies'
-        'update:Update package dependencies'
-        'generate-xcodeproj:Generates an Xcode project'
-        'show-dependencies:Print the resolved dependency graph'
-        'dump-package:Print parsed Package.swift as JSON'
-        '--version:Print the Swift Package Manager version'
+    local -a arguments
+    arguments=(
+        '-Xcc[Pass flag through to all C compiler invocations]: : '
+        '-Xswiftc[Pass flag through to all Swift compiler invocations]: : '
+        '-Xlinker[Pass flag through to all linker invocations]: : '
+        '--build-path[Specify build/cache directory ]: :_files'
+        '(--chdir -C)'{--chdir,-C}'[Change working directory before any other operation]: :_files'
+        '--color[Specify color mode (auto|always|never) ]: :{_values "" auto always never}'
+        '--enable-new-resolver[]'
+        '--version[]'
+        '(--verbose -v)'{--verbose,-v}'[Increase verbosity of informational output]'
+        '--version[]'
     )
-    _arguments \
-        '(-): :{_describe "commands" commands}' \
-        '(-)*:: :->arg'
-
-    case $state in
-        (arg)
-            declare -a package_options
-            package_options=(
-                $shared_options
-                "--enable-code-coverage[Enable code coverage in generated Xcode projects]"
-            )
-
-            case ${words[1]} in
-                (init)
-                    _arguments \
-                        '--type[Type of package to initialize]: :{_values "package types" empty library executable system-module}' \
-                        $package_options
-                    ;;
-                (generate-xcodeproj)
-                    _arguments \
-                        '--output:[Xcode project filename]:_files' \
-                        $package_options
-                    ;;
-                (show-dependencies)
-                    _arguments \
-                        '--format[Dependency graph output format]:FORMATS:{_values "formats" text dot json}' \
-                        $package_options
-                    ;;
-                (dump-package)
-                    _arguments \
-                        '--input:[Package filename to parse]:_files' \
-                        $package_options
-                    ;;
-                (*)
-                    _arguments $package_options
-                    ;;
-            esac
-            ;;
-    esac
+    _arguments $arguments
 }
 
 _swift_test() {
-    _arguments \
-        '(-s --specifier)'{-s,--specifier}'[Run a test case subclass <test-module>.<test-case>]: : ' \
-        '(-s --specifier)'{-s,--specifier}'[Run a specific test method <test-module>.<test-case>/<test>]: : ' \
-        '(-l --list-tests)'{-l,--list-tests}'[Lists test methods in specifier format]' \
-        '--skip-build[Skip building the test target]' \
-        "--version[Print the Swift Package Manager version]" \
-        $shared_options
+    local -a arguments
+    arguments=(
+        '-Xcc[Pass flag through to all C compiler invocations]: : '
+        '-Xswiftc[Pass flag through to all Swift compiler invocations]: : '
+        '-Xlinker[Pass flag through to all linker invocations]: : '
+        '--build-path[Specify build/cache directory ]: :_files'
+        '(--chdir -C)'{--chdir,-C}'[Change working directory before any other operation]: :_files'
+        '--color[Specify color mode (auto|always|never) ]: :{_values "" auto always never}'
+        '--enable-new-resolver[]'
+        '--version[]'
+        '(--verbose -v)'{--verbose,-v}'[Increase verbosity of informational output]'
+        '(--configuration -c)'{--configuration,-c}'[Build with configuration (debug|release) ]: :{_values "" debug release}'
+        '--skip-build[Skip building the test target]'
+        '(--list-tests -l)'{--list-tests,-l}'[Lists test methods in specifier format]'
+        '--parallel[]'
+        '(--specifier -s)'{--specifier,-s}'[Run a specific test class or method, Format: <test-module>.<test-case> or <test-module>.<test-case>/<test>]: : '
+    )
+    _arguments $arguments
 }
 
 _swift_compiler() {

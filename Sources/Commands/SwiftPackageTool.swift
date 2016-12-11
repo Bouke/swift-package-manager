@@ -236,7 +236,7 @@ public class SwiftPackageTool: SwiftTool<PackageToolOptions> {
         case .generateShellScript:
             switch options.shell {
             case .bash: bash_template(print: { print($0) })
-//            case .zsh: zsh_template(print: print)
+            case .zsh: zsh_template(print: { print($0) })
             default: break
             }
         }
