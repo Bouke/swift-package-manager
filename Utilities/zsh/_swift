@@ -3,7 +3,18 @@ local context state state_descr line
 typeset -A opt_args
 
 _swift() {
+    declare -a shared_options
+    shared_options=(
+        '(-C --chdir)'{-C,--chdir}"[Change working directory before any other operation]: :_files"
+        "--color[Specify color mode (auto|always|never)]: :{_values "mode" auto always never}"
+        '(-v --verbose)'{-v,--verbose}"[Increase verbosity of informational output]"
+        "-Xcc[Pass flag through to all C compiler invocations]: : "
+        "-Xlinker[Pass flag through to all linker invocations]: : "
+        "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
+    )
+
     _arguments -C \
+        '(- :)--help[prints the synopsis and a list of the most commonly used commands]: :->arg' \
         '(-): :->command' \
         '(-)*:: :->arg' && return
 
@@ -11,9 +22,9 @@ _swift() {
         (command)
             local tools
             tools=(
-                'test:Build and run tests'
-                'build:Build sources into binary products'
-                'package:Perform operations on Swift packages'
+                'build:build the package'
+                'package:package management'
+                'test:run tests'
             )
             _alternative \
                 'tools:common:{_describe "tool" tools }' \
@@ -21,14 +32,14 @@ _swift() {
             ;;
         (arg)
             case ${words[1]} in
-                (test)
-                    _swift_test
-                    ;;
                 (build)
                     _swift_build
                     ;;
                 (package)
                     _swift_package
+                    ;;
+                (test)
+                    _swift_test
                     ;;
                 (*)
                     _swift_compiler
@@ -37,278 +48,116 @@ _swift() {
             ;;
     esac
 }
-_swift_test() {
-    arguments=(
-        "-Xcc[Pass flag through to all C compiler invocations]: : "
-        "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
-        "-Xlinker[Pass flag through to all linker invocations]: : "
-        "--build-path[Specify build/cache directory ]: :_files"
-        "(--chdir -C)"{--chdir,-C}"[Change working directory before any other operation]: :_files"
-        "--color[Specify color mode (auto|always|never) ]: :{_values '' auto always never}"
-        "--enable-new-resolver[]"
-        "--version[]"
-        "(--verbose -v)"{--verbose,-v}"[Increase verbosity of informational output]"
-        "(--configuration -c)"{--configuration,-c}"[Build with configuration (debug|release) ]: :{_values '' debug release}"
-        "--skip-build[Skip building the test target]"
-        "(--list-tests -l)"{--list-tests,-l}"[Lists test methods in specifier format]"
-        "--parallel[]"
-        "(--specifier -s)"{--specifier,-s}"[Run a specific test class or method, Format: <test-module>.<test-case> or <test-module>.<test-case>/<test>]: : "
-    )
-    _arguments $arguments && return
-}
 
 _swift_build() {
-    arguments=(
-        "-Xcc[Pass flag through to all C compiler invocations]: : "
-        "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
-        "-Xlinker[Pass flag through to all linker invocations]: : "
-        "--build-path[Specify build/cache directory ]: :_files"
-        "(--chdir -C)"{--chdir,-C}"[Change working directory before any other operation]: :_files"
-        "--color[Specify color mode (auto|always|never) ]: :{_values '' auto always never}"
-        "--enable-new-resolver[]"
-        "--version[]"
-        "(--verbose -v)"{--verbose,-v}"[Increase verbosity of informational output]"
-        "--build-tests[]"
-        "--clean[]"
-        "(--configuration -c)"{--configuration,-c}"[Build with configuration (debug|release) ]: :{_values '' debug release}"
-    )
-    _arguments $arguments && return
+    _arguments \
+        '(-c --configuration)'{-c,--configuration}'[Build with configuration]:MODES:(debug release)' \
+        '--clean[Delete artifacts (build|dist) (default: build)]:MODES:(build dist)' \
+        $shared_options \
+        '--build-path[Specify build directory]: :_files'
 }
 
 _swift_package() {
-    arguments=(
-        "-Xcc[Pass flag through to all C compiler invocations]: : "
-        "-Xswiftc[Pass flag through to all Swift compiler invocations]: : "
-        "-Xlinker[Pass flag through to all linker invocations]: : "
-        "--build-path[Specify build/cache directory ]: :_files"
-        "(--chdir -C)"{--chdir,-C}"[Change working directory before any other operation]: :_files"
-        "--color[Specify color mode (auto|always|never) ]: :{_values '' auto always never}"
-        "--enable-new-resolver[]"
-        "--version[]"
-        "(--verbose -v)"{--verbose,-v}"[Increase verbosity of informational output]"
-        "--version[]"
-        '(-): :->command'
-        '(-)*:: :->arg'
+    local -a commands
+    commands=(
+        'init:Initialize a new package'
+        'fetch:Fetch package dependencies'
+        'update:Update package dependencies'
+        'generate-xcodeproj:Generates an Xcode project'
+        'show-dependencies:Print the resolved dependency graph'
+        'dump-package:Print parsed Package.swift as JSON'
+        '--version:Print the Swift Package Manager version'
     )
-    _arguments $arguments && return
+    _arguments \
+        '(-): :{_describe "commands" commands}' \
+        '(-)*:: :->arg'
+
     case $state in
-        (command)
-            local modes
-            modes=(
-                'update:Update package dependencies'
-                'show-dependencies:Print the resolved dependency graph'
-                'resolve:'
-                'fetch:Fetch package dependencies'
-                'edit:'
-                'describe:Describe the current package'
-                'unpin:'
-                'clean:Delete build artifacts'
-                'reset:Reset the complete cache/build directory'
-                'unedit:'
-                'generate-xcodeproj:Generates an Xcode project'
-                'init:Initialize a new package'
-                'dump-package:Print parsed Package.swift as JSON'
-                'generate-shell-script:'
-                'pin:'
-            )
-            _describe "mode" modes
-            ;;
         (arg)
+            declare -a package_options
+            package_options=(
+                $shared_options
+                "--enable-code-coverage[Enable code coverage in generated Xcode projects]"
+            )
+
             case ${words[1]} in
-                (update)
-                    _swift_package_update
-                    ;;
-                (show-dependencies)
-                    _swift_package_show-dependencies
-                    ;;
-                (resolve)
-                    _swift_package_resolve
-                    ;;
-                (fetch)
-                    _swift_package_fetch
-                    ;;
-                (edit)
-                    _swift_package_edit
-                    ;;
-                (describe)
-                    _swift_package_describe
-                    ;;
-                (unpin)
-                    _swift_package_unpin
-                    ;;
-                (clean)
-                    _swift_package_clean
-                    ;;
-                (reset)
-                    _swift_package_reset
-                    ;;
-                (unedit)
-                    _swift_package_unedit
+                (init)
+                    _arguments \
+                        '--type[Type of package to initialize]: :{_values "package types" empty library executable system-module}' \
+                        $package_options
                     ;;
                 (generate-xcodeproj)
-                    _swift_package_generate-xcodeproj
+                    _arguments \
+                        '--output:[Xcode project filename]:_files' \
+                        $package_options
                     ;;
-                (init)
-                    _swift_package_init
+                (show-dependencies)
+                    _arguments \
+                        '--format[Dependency graph output format]:FORMATS:{_values "formats" text dot json}' \
+                        $package_options
                     ;;
                 (dump-package)
-                    _swift_package_dump-package
+                    _arguments \
+                        '--input:[Package filename to parse]:_files' \
+                        $package_options
                     ;;
-                (generate-shell-script)
-                    _swift_package_generate-shell-script
-                    ;;
-                (pin)
-                    _swift_package_pin
+                (*)
+                    _arguments $package_options
                     ;;
             esac
             ;;
     esac
 }
 
-_swift_package_update() {
-    arguments=(
-        "--repin[Update without applying pins and repin the updated versions]"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_show-dependencies() {
-    arguments=(
-        "--format[text|dot|json]: :{_values '' text dot json}"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_resolve() {
-    arguments=(
-        "--type[text|json]: :{_values '' text json}"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_fetch() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_edit() {
-    arguments=(
-        "--revision[The revision to edit]: : "
-        "--branch[The branch to create]: : "
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_describe() {
-    arguments=(
-        "--type[json|text]: :{_values '' text json}"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_unpin() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_clean() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_reset() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_unedit() {
-    arguments=(
-        "--force[Unedit the package even if it has uncommited and unpushed changes.]"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_generate-xcodeproj() {
-    arguments=(
-        "--xcconfig-overrides[Path to xcconfig file]: : "
-        "--enable-code-coverage[Enable code coverage in the generated project]"
-        "--output[Path where the Xcode project should be generated]: :_files"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_init() {
-    arguments=(
-        "--type[empty|library|executable|system-module]: :{_values '' empty library executable system-module}"
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_dump-package() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_generate-shell-script() {
-    arguments=(
-    )
-    _arguments $arguments && return
-}
-
-_swift_package_pin() {
-    arguments=(
-        "--enable-autopin[Enable automatic pinning]"
-        "--disable-autopin[Disable automatic pinning]"
-        "--all[Pin all dependencies]"
-        "--message[The reason for pinning]: : "
-        "--version[The version to pin at]: : "
-    )
-    _arguments $arguments && return
+_swift_test() {
+    _arguments \
+        '(-s --specifier)'{-s,--specifier}'[Run a test case subclass <test-module>.<test-case>]: : ' \
+        '(-s --specifier)'{-s,--specifier}'[Run a specific test method <test-module>.<test-case>/<test>]: : ' \
+        '(-l --list-tests)'{-l,--list-tests}'[Lists test methods in specifier format]' \
+        '--skip-build[Skip building the test target]' \
+        "--version[Print the Swift Package Manager version]" \
+        $shared_options
 }
 
 _swift_compiler() {
-    arguments=(
-        "-assert-config[Specify the assert_configuration replacement. Possible values are Debug, Release, Unchecked, DisableReplacement.]: : "
-        "-continue-building-after-errors[Continue building, even after errors are encountered]"
-        "-D[Marks a conditional compilation flag as true]: : "
-        "-framework[Specifies a framework which should be linked against]: : "
-        "-F[Add directory to framework search path]: : "
-        "-gdwarf-types[Emit full DWARF type info.]"
-        "-gline-tables-only[Emit minimal debug info for backtraces only]"
+    declare -a build_options
+    build_options=(
+        '-assert-config[Specify the assert_configuration replacement.]: :{_values "" Debug Release Unchecked DisableReplacement}'
+        '-D[Marks a conditional compilation flag as true]: : '
+        '-framework[Specifies a framework which should be linked against]: : '
+        '-F[Add directory to framework search path]: :_files'
+        '-gdwarf-types[Emit full DWARF type info.]'
+        '-gline-tables-only[Emit minimal debug info for backtraces only]'
         "-gnone[Don't emit debug info]"
-        "-g[Emit debug info. This is the preferred setting for debugging with LLDB.]"
-        "-help[Display available options]"
-        "-I[Add directory to the import search path]: : "
-        "-j[Number of commands to execute in parallel]: : "
-        "-L[Add directory to library link search path]: : "
-        "-module-cache-path[Specifies the Clang module cache path]: : "
-        "-module-link-name[Library to link against when using this module]: : "
-        "-module-name[Name of the module to build]: : "
+        '-g[Emit debug info. This is the preferred setting for debugging with LLDB.]'
+        '-help[Display available options]'
+        '-index-store-path[Store indexing data to <path>]: :_files'
+        '-I[Add directory to the import search path]: :_files'
+        '-j[Number of commands to execute in parallel]: : '
+        '-L[Add directory to library link search path]: :_files'
+        '-l-[Specifies a library which should be linked against]: : '
+        '-module-cache-path[Specifies the Clang module cache path]: :_files'
+        '-module-link-name[Library to link against when using this module]: : '
+        '-module-name[Name of the module to build]: : '
         "-nostdimport[Don't search the standard library import path for modules]"
-        "-num-threads[Enable multi-threading and specify number of threads]: : "
-        "-Onone[Compile without any optimization]"
-        "-Ounchecked[Compile with optimizations and remove runtime safety checks]"
-        "-O[Compile with optimizations]"
-        "-sdk[Compile against <sdk>]: : "
-        "-static-executable[Statically link the executable]"
-        "-static-stdlib[Statically link the Swift standard library]"
-        "-suppress-warnings[Suppress all warnings]"
-        "-swift-version[Interpret input according to a specific Swift language version number]: : "
-        "-target-cpu[Generate code for a particular CPU variant]: : "
-        "-target[Generate code for the given target]: : "
-        "-version[Print version information and exit]"
-        "-v[Show commands to run and use verbose output]"
-        "-warnings-as-errors[Treat warnings as errors]"
-        "-Xcc[Pass <arg> to the C/C++/Objective-C compiler]: : "
-        "-Xlinker[Specifies an option which should be passed to the linker]: : "
+        '-num-threads[Enable multi-threading and specify number of threads]: : '
+        '-Onone[Compile without any optimization]'
+        '-Ounchecked[Compile with optimizations and remove runtime safety checks]'
+        '-O[Compile with optimizations]'
+        '-sdk[Compile against <sdk>]: : '
+        '-static-stdlib[Statically link the Swift standard library]'
+        '-suppress-warnings[Suppress all warnings]'
+        '-target-cpu[Generate code for a particular CPU variant]: : '
+        '-target[Generate code for the given target]: : '
+        '-use-ld=-[Specifies the linker to be used]'
+        '-version[Print version information and exit]'
+        '-v[Show commands to run and use verbose output]'
+        '-warnings-as-errors[Treat warnings as errors]'
+        '-Xcc[Pass <arg> to the C/C++/Objective-C compiler]: : '
+        '-Xlinker[Specifies an option which should be passed to the linker]: : '
         '*:inputs:_files'
     )
-    _arguments $arguments && return
+    _arguments $build_options
 }
 
 _swift
